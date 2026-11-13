@@ -22,16 +22,20 @@ import java.net.URLEncoder
  * ALLEEN LEZEN (afgesproken met HB9Q): de app verstuurt geen berichten en wijzigt niets op de site.
  * Deelnemers = wie recent in de chat schreef; zie ChatStore.recentParticipants.
  */
-class Hb9qClient {
+class Hb9qClient internal constructor(private val baseUrl: String, nowMillis: () -> Long) {
+
+    constructor() : this(BASE_URL, System::currentTimeMillis)
 
     class LoginFailedException(msg: String) : IOException(msg)
 
     /** Login wordt tijdelijk niet opnieuw geprobeerd: nog [retryAfterMs] ms te wachten. */
     class LoginOnCooldownException(val retryAfterMs: Long) : IOException("HB9Q: te veel mislukte logins, even wachten")
 
+    private val pageUrl = "$baseUrl/"
+
     private var loggedIn = false
     private var loggedInAs: String? = null
-    private val loginBackoff = LoginBackoff()
+    private val loginBackoff = LoginBackoff(nowMillis)
 
     init {
         // De sessie van HB9Q werkt met cookies; die houden we in het geheugen bij.
@@ -42,7 +46,9 @@ class Hb9qClient {
 
     suspend fun login(login: String, password: String) = withContext(Dispatchers.IO) {
         loggedIn = false
-        val page = request("GET", PAGE_URL, null).body
+        // Altijd met een nieuwe sessie beginnen: met een oude, nog geldige sessiecookie toont HB9Q geen loginformulier
+        (CookieHandler.getDefault() as? CookieManager)?.cookieStore?.removeAll()
+        val page = request("GET", pageUrl, null).body
         val token = Jsoup.parse(page).selectFirst("input[name=swordfisch]")?.attr("value")
             ?: throw IOException("HB9Q: login form not found")
         val form = formEncode(
@@ -50,7 +56,7 @@ class Hb9qClient {
             "txtLoginName" to login,
             "txtPwd" to password,
         )
-        val result = request("POST", PAGE_URL, form).body
+        val result = request("POST", pageUrl, form).body
         // Na een geslaagde login staat er een "logout"-link op de pagina
         if (!result.contains("srv=logout")) {
             throw LoginFailedException("Inloggen bij HB9Q mislukt. Controleer login en wachtwoord.")
@@ -61,13 +67,13 @@ class Hb9qClient {
 
     /** Berichten van een band. */
     suspend fun fetchMessages(band: Hb9qBand, login: String, password: String): List<ChatMessage> {
-        val json = postJson("$BASE_URL/rpc/logger/logger_lst.cfm?vBand=${band.id}&vSearch=&vSearchDt=0", "", login, password)
+        val json = postJson("$baseUrl/rpc/logger/logger_lst.cfm?vBand=${band.id}&vSearch=&vSearchDt=0", "", login, password)
         return ChatParser.parseRows(loggerRows(json))
     }
 
     /** Uitloggen zoals de website ("Logout") en de sessie-cookies in de app wissen. */
     suspend fun logout() = withContext(Dispatchers.IO) {
-        if (loggedIn) runCatching { request("GET", "$PAGE_URL?srv=logout", null) }
+        if (loggedIn) runCatching { request("GET", "$pageUrl?srv=logout", null) }
         (CookieHandler.getDefault() as? CookieManager)?.cookieStore?.removeAll()
         loggedIn = false
         loggedInAs = null
@@ -138,8 +144,8 @@ class Hb9qClient {
             if (code >= 400) throw IOException("${shortName(url)}: HTTP $code")
             val body = if (code in 300..399) "" else conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
             // Een redirect na het inloggen volgen we zelf, zodat de cookies behouden blijven
-            if (code in 300..399 && method == "POST" && url == PAGE_URL) {
-                val location = conn.getHeaderField("Location") ?: PAGE_URL
+            if (code in 300..399 && method == "POST" && url == pageUrl) {
+                val location = conn.getHeaderField("Location") ?: pageUrl
                 return request("GET", URL(URL(url), location).toString(), null)
             }
             return Response(code, body)
@@ -157,6 +163,5 @@ class Hb9qClient {
 
     companion object {
         private const val BASE_URL = "https://logger.hb9q.ch"
-        private const val PAGE_URL = "$BASE_URL/"
     }
 }
