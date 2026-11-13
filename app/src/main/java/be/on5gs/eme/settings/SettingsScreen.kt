@@ -23,8 +23,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -138,12 +140,22 @@ private fun LanguagePicker() {
 /** Login voor de HB9Q-chat. Wordt versleuteld bewaard (zie CredentialStore). */
 @Composable
 private fun Hb9qLoginSection(store: CredentialStore) {
-    val saved = remember { store.load() }
-    var hasSaved by remember { mutableStateOf(saved != null) }
-    var login by remember { mutableStateOf(saved?.login ?: "") }
+    // store.load() leest de Android Keystore (TEE/StrongBox), dus niet rechtstreeks in
+    // remember {} op de compositie-/UI-draad (zie CredentialStore.loadAsync).
+    val saved by produceState<CredentialStore.Credentials?>(initialValue = null, store) {
+        value = store.loadAsync()
+    }
+    var hasSaved by remember { mutableStateOf(false) }
+    var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }      // wordt nooit terug getoond
     var showPassword by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(saved) {
+        saved?.let {
+            login = it.login
+            hasSaved = true
+        }
+    }
 
     Text(stringResource(R.string.hb9q_chat), style = MaterialTheme.typography.titleLarge)
     Text(

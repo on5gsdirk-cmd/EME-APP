@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -71,7 +72,11 @@ fun ChatScreen(settings: SettingsRepository, credentialStore: CredentialStore, m
     val messages = if (chat.band == band) chat.messages else emptyList()
     val participants = if (chat.band == band) ChatStore.recentParticipants(chat, myCallsign) else emptyList()
     var subTab by remember { mutableIntStateOf(0) }          // 0 = berichten, 1 = deelnemers
-    val creds = remember { credentialStore.load() }
+    // credentialStore.load() leest de Android Keystore (TEE/StrongBox), dus niet rechtstreeks
+    // in remember {} op de compositie-/UI-draad (zie CredentialStore.loadAsync).
+    val creds by produceState<CredentialStore.Credentials?>(initialValue = null, credentialStore) {
+        value = credentialStore.loadAsync()
+    }
     val scope = rememberCoroutineScope()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
