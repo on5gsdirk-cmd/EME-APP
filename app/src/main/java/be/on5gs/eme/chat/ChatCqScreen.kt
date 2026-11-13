@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -67,7 +68,11 @@ private val ERROR_RED = Color(0xFFEF5350)
 fun ChatCqScreen(settings: SettingsRepository, credentialStore: CredentialStore) {
     var band by remember { mutableStateOf(settings.chatBand) }
     val chat by ChatStore.state.collectAsState()
-    val creds = remember { credentialStore.load() }
+    // credentialStore.load() leest de Android Keystore (TEE/StrongBox), dus niet rechtstreeks
+    // in remember {} op de compositie-/UI-draad (zie CredentialStore.loadAsync).
+    val creds by produceState<CredentialStore.Credentials?>(initialValue = null, credentialStore) {
+        value = credentialStore.loadAsync()
+    }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 

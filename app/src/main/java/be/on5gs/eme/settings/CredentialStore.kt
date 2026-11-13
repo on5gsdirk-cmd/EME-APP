@@ -4,6 +4,8 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -22,10 +24,18 @@ class CredentialStore(context: Context) {
     private val prefs = context.getSharedPreferences("eme_secure", Context.MODE_PRIVATE)
 
     fun load(): Credentials? {
+        lastLoadThreadNameForTest = Thread.currentThread().name
         val login = decrypt(prefs.getString(KEY_LOGIN, null)) ?: return null
         val password = decrypt(prefs.getString(KEY_PASSWORD, null)) ?: return null
         return Credentials(login, password)
     }
+
+    /**
+     * Zoals [load], maar van een achtergronddraad: het aanmaken van de Keystore-sleutel
+     * (eerste keer: TEE/StrongBox) en de cipher-bewerkingen lopen anders op de UI-draad,
+     * net als bij de netwerkoproepen in [be.on5gs.eme.chat.Hb9qClient] en de cq-package.
+     */
+    suspend fun loadAsync(): Credentials? = withContext(Dispatchers.IO) { load() }
 
     fun save(login: String, password: String) {
         prefs.edit()
@@ -76,5 +86,8 @@ class CredentialStore(context: Context) {
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
         private const val KEY_LOGIN = "hb9q_login"
         private const val KEY_PASSWORD = "hb9q_password"
+
+        /** Alleen voor tests: naam van de draad die [load] het laatst uitvoerde. */
+        internal var lastLoadThreadNameForTest: String? = null
     }
 }
