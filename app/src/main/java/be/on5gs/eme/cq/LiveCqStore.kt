@@ -36,13 +36,23 @@ object LiveCqStore {
     /**
      * Haalt nieuwe gegevens op als de vorige ophaling ouder is dan [maxAgeMs].
      * Twee schermen die tegelijk vragen, leiden tot maar één aanvraag.
+     *
+     * [manual] onderscheidt een bewuste tik op de vernieuwknop van een geplande, automatische
+     * verversing: alleen de geplande verversing wordt tegen [MIN_FETCH_INTERVAL_MS] aangehouden
+     * (om W3SZ niet te vaak te bevragen). Een manuele tik haalt altijd meteen opnieuw op, ook
+     * binnen die 30s, zodat de knop nooit stilzwijgend niets doet.
      */
-    suspend fun refreshIfOlderThan(maxAgeMs: Long) = lock.withLock {
+    suspend fun refreshIfOlderThan(
+        maxAgeMs: Long,
+        manual: Boolean = false,
+        fetch: suspend () -> List<LiveCqSpot> = LiveCqRepository::fetch,
+    ) = lock.withLock {
         val s = _state.value
-        if (System.currentTimeMillis() - s.lastFetch < maxOf(maxAgeMs, MIN_FETCH_INTERVAL_MS)) return@withLock
+        val effectiveMaxAgeMs = if (manual) maxAgeMs else maxOf(maxAgeMs, MIN_FETCH_INTERVAL_MS)
+        if (System.currentTimeMillis() - s.lastFetch < effectiveMaxAgeMs) return@withLock
         _state.value = s.copy(loading = true)
         _state.value = try {
-            State(spots = LiveCqRepository.fetch(), lastFetch = System.currentTimeMillis())
+            State(spots = fetch(), lastFetch = System.currentTimeMillis())
         } catch (e: Exception) {
             // Vorige lijst blijft staan, met een foutmelding erbij
             s.copy(
