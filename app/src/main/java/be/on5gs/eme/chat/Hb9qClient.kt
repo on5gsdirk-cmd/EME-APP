@@ -30,6 +30,15 @@ class Hb9qClient(private val baseUrl: String = BASE_URL) {
     private var loggedIn = false
     private var loggedInAs: String? = null
 
+    /** Klok voor de wachttijd na een geweigerde login; alleen tests vervangen hem. */
+    internal var clock: () -> Long = System::currentTimeMillis
+
+    /** Laatste login die HB9Q weigerde. Met dezelfde gegevens niet opnieuw proberen binnen [LOGIN_RETRY_MS]. */
+    private class Rejected(val login: String, val password: String, val at: Long)
+    private var rejected: Rejected? = null
+    private val LOGIN_RETRY_MS = 5 * 60_000L
+    private val LOGIN_FAILED = "Inloggen bij HB9Q mislukt. Controleer login en wachtwoord."
+
     init {
         // De sessie van HB9Q werkt met cookies; die houden we in het geheugen bij.
         if (CookieHandler.getDefault() == null) {
@@ -38,6 +47,12 @@ class Hb9qClient(private val baseUrl: String = BASE_URL) {
     }
 
     suspend fun login(login: String, password: String) = withContext(Dispatchers.IO) {
+        // Pas geweigerd met dezelfde gegevens: HB9Q niet bij elke verversing opnieuw belasten
+        rejected?.let {
+            if (it.login == login && it.password == password && clock() - it.at < LOGIN_RETRY_MS) {
+                throw LoginFailedException(LOGIN_FAILED)
+            }
+        }
         loggedIn = false
         // Altijd met een nieuwe sessie beginnen: met een oude, nog geldige sessiecookie toont HB9Q geen loginformulier
         (CookieHandler.getDefault() as? CookieManager)?.cookieStore?.removeAll()
@@ -52,8 +67,10 @@ class Hb9qClient(private val baseUrl: String = BASE_URL) {
         val result = request("POST", pageUrl, form).body
         // Na een geslaagde login staat er een "logout"-link op de pagina
         if (!result.contains("srv=logout")) {
-            throw LoginFailedException("Inloggen bij HB9Q mislukt. Controleer login en wachtwoord.")
+            rejected = Rejected(login, password, clock())
+            throw LoginFailedException(LOGIN_FAILED)
         }
+        rejected = null
         loggedIn = true
         loggedInAs = login
     }
@@ -70,6 +87,7 @@ class Hb9qClient(private val baseUrl: String = BASE_URL) {
         (CookieHandler.getDefault() as? CookieManager)?.cookieStore?.removeAll()
         loggedIn = false
         loggedInAs = null
+        rejected = null
     }
 
     // ---------- Intern ----------

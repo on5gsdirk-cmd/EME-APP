@@ -61,6 +61,49 @@ class Hb9qClientTest {
         }
     }
 
+    /** HB9Q weigert de login: met dezelfde gegevens pas na 5 minuten opnieuw proberen, niet bij elke verversing. */
+    @Test
+    fun rejectedLoginIsNotRetriedWithTheSameCredentialsForFiveMinutes() = runBlocking {
+        FakeHb9q(users).use { hb9q ->
+            var now = 1_000_000L
+            val client = Hb9qClient(hb9q.baseUrl).apply { clock = { now } }
+            repeat(3) { expectLoginFailed { client.fetchMessages(Hb9qBand.B1296, "ON0AAA", "wrong") } }
+            assertEquals(1, hb9q.loginPosts)
+
+            now += 5 * 60_000L - 1
+            expectLoginFailed { client.fetchMessages(Hb9qBand.B1296, "ON0AAA", "wrong") }
+            assertEquals(1, hb9q.loginPosts)
+
+            now += 1
+            expectLoginFailed { client.fetchMessages(Hb9qBand.B1296, "ON0AAA", "wrong") }
+            assertEquals(2, hb9q.loginPosts)
+        }
+    }
+
+    /** Een verbeterd wachtwoord (of andere login) wordt meteen geprobeerd, ook vlak na een geweigerde login. */
+    @Test
+    fun correctedPasswordIsTriedRightAway() = runBlocking {
+        FakeHb9q(users).use { hb9q ->
+            val client = Hb9qClient(hb9q.baseUrl).apply { clock = { 1_000_000L } }
+            expectLoginFailed { client.fetchMessages(Hb9qBand.B1296, "ON0AAA", "wrong") }
+            client.fetchMessages(Hb9qBand.B1296, "ON0AAA", "pw-a")
+            assertEquals(2, hb9q.loginPosts)
+            assertEquals("ON0AAA", hb9q.lastLoggedIn)
+        }
+    }
+
+    /** "Log out" en opnieuw inloggen: de wachttijd na een geweigerde login vervalt. */
+    @Test
+    fun logoutClearsTheWait() = runBlocking {
+        FakeHb9q(users).use { hb9q ->
+            val client = Hb9qClient(hb9q.baseUrl).apply { clock = { 1_000_000L } }
+            expectLoginFailed { client.fetchMessages(Hb9qBand.B1296, "ON0AAA", "wrong") }
+            client.logout()
+            expectLoginFailed { client.fetchMessages(Hb9qBand.B1296, "ON0AAA", "wrong") }
+            assertEquals(2, hb9q.loginPosts)
+        }
+    }
+
     /** Na een mislukte login met een nog geldige sessie herstelt de volgende poging zonder de app te herstarten. */
     @Test
     fun afterAFailedLoginTheNextAttemptRecovers() = runBlocking {
