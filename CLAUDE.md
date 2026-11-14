@@ -38,8 +38,14 @@ The rules for every change are in CONTRIBUTING.md. Read and follow them:
 
 ## Releases
 
-A version bump (`versionCode`, `versionName` in `app/build.gradle.kts`) and a new
-`apk/EME-APP.apk` go in their own release commit, separate from fixes and features.
+- When the maintainer asks for a release ("make a release", "maak een release"), follow
+  `.claude/skills/release/SKILL.md`.
+- A fix or feature pull request never changes `versionCode` or `versionName` and never adds
+  an APK. Only the release pull request changes the version, together with
+  `docs/releases/vX.Y.Z.md`.
+- Merging the release pull request publishes the release: `.github/workflows/release.yml`
+  builds the APK, checks its signing certificate and creates the GitHub release. Never build
+  an APK by hand to share, and never delete or move a published release or tag.
 
 ## Communication
 

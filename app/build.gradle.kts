@@ -16,9 +16,23 @@ android {
         versionName = "0.16"
     }
 
+    signingConfigs {
+        // Alleen in de release-workflow (.github/workflows/release.yml): de sleutel komt uit de
+        // GitHub-secrets. Op je eigen pc is RELEASE_KEYSTORE_FILE niet gezet en verandert er niets.
+        System.getenv("RELEASE_KEYSTORE_FILE")?.let { path ->
+            create("release") {
+                storeFile = file(path)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {

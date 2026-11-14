@@ -42,8 +42,9 @@ Requirements: Android Studio, or JDK 17+ and the Android SDK (platform 35).
   W3SZ Live CQ. Replace every e-mail address by `xxxx@test.com` before you add a new sample.
 - **No secrets.** Never put a login, password or cookie in code, test data, an issue or a
   pull request.
-- **Do not commit an APK.** The maintainer builds and publishes the app. The same goes for
-  `versionCode` and `versionName` in `app/build.gradle.kts`.
+- **No APK and no version number in a pull request.** A fix or feature pull request does not
+  change `versionCode` or `versionName` in `app/build.gradle.kts` and never adds an APK.
+  Releases are separate, see below.
 
 ## Rules for the external services
 
@@ -56,6 +57,13 @@ discuss them in an issue first.
   Live CQ every 120 s with a minimum of 30 s between two fetches (`LiveCqStore`).
 - **Keep the honest User-Agent** (`EME-ON5GS-Android/<version>`), so the operators of HB9Q and
   W3SZ can see where the requests come from.
+
+## Releases
+
+A release is its own pull request: it raises `versionCode` and `versionName` and adds the
+release notes `docs/releases/vX.Y.Z.md`, nothing else. When it is merged, GitHub builds, signs
+and publishes the APK as a GitHub release (`.github/workflows/release.yml`). Claude prepares
+that pull request when the maintainer asks "make a release" (`.claude/skills/release/SKILL.md`).
 
 ## Reporting a bug
 
