@@ -1,7 +1,9 @@
 package be.on5gs.eme.chat
 
+import androidx.annotation.VisibleForTesting
 import be.on5gs.eme.R
 import be.on5gs.eme.settings.CredentialStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +26,8 @@ object ChatStore {
         val error: Pair<Int, String>? = null,
         val loading: Boolean = false,
         val lastFetch: Long = 0L,
+        /** Start van de laatste aanvraag, ook een afgebroken: die bereikte HB9Q toch. */
+        val lastAttempt: Long = 0L,
         /** Uitgelogd met de knop "Log out": niets meer ophalen tot je opnieuw inlogt. */
         val loggedOut: Boolean = false,
     )
@@ -32,6 +36,12 @@ object ChatStore {
     data class Participant(val time: String, val callsign: String, val name: String)
 
     private val client by lazy { Hb9qClient() }
+
+    /** Haalt de berichten op bij HB9Q. Alleen voor tests vervangbaar, zodat er geen netwerk nodig is. */
+    @VisibleForTesting
+    internal var fetchMessages: suspend (Hb9qBand, CredentialStore.Credentials) -> List<ChatMessage> =
+        { band, creds -> client.fetchMessages(band, creds.login, creds.password) }
+
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
     private val lock = Mutex()
@@ -45,11 +55,16 @@ object ChatStore {
             _state.value = s
         }
         val now = System.currentTimeMillis()
-        if (now - s.lastFetch < maxAgeMs) return@withLock
+        if (now - s.lastAttempt < maxAgeMs) return@withLock
+        s = s.copy(lastAttempt = now)
         _state.value = s.copy(loading = true)
         s = try {
-            val msgs = client.fetchMessages(band, creds.login, creds.password)
+            val msgs = fetchMessages(band, creds)
             s.copy(messages = msgs, error = null, lastFetch = now)
+        } catch (e: CancellationException) {
+            // Tabblad verlaten tijdens het ophalen: geen fout. De aanvraag liep wel, dus lastAttempt blijft.
+            _state.value = s.copy(loading = false)
+            throw e
         } catch (e: Hb9qClient.LoginFailedException) {
             s.copy(error = R.string.login_failed to "", lastFetch = now)
         } catch (e: Exception) {
