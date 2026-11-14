@@ -72,7 +72,9 @@ fun CqScreen(settings: SettingsRepository, myLocator: String) {
     val error = store.error
     val loading = store.loading
 
-    suspend fun load() = LiveCqStore.refreshIfOlderThan(0)
+    // Manuele tik op de vernieuwknop: altijd meteen opnieuw ophalen, ook binnen de 30s-drempel
+    // die alleen voor de geplande, automatische verversing geldt (zie LiveCqStore).
+    suspend fun load() = LiveCqStore.refreshIfOlderThan(0, manual = true)
 
     // Automatisch ophalen zolang dit tabblad op het scherm staat
     val lifecycle = LocalLifecycleOwner.current.lifecycle
