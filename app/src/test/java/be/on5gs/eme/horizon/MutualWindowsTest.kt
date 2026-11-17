@@ -17,7 +17,7 @@ class MutualWindowsTest {
     @Test
     fun asInTheSharedTable() {
         val rows = ExpectedCsv.read("mutual_window")
-        assertEquals(7, rows.size)
+        assertEquals(8, rows.size)
         rows.forEach { r ->
             val home = Maidenhead.toLatLon(r.getValue("home"))!!
             val dx = Maidenhead.toLatLon(r.getValue("dx"))!!
@@ -32,6 +32,32 @@ class MutualWindowsTest {
             assertEquals("$r max", r.getValue("first_max_el").toDouble(), f.maxElDeg, 0.05)
             assertTrue("$r max at", abs(f.maxAtMillis - ms(r.getValue("first_max_at_utc"))) <= 60_000)
             assertEquals("$r partial", r.getValue("first_partial").toBoolean(), f.partial)
+            val l = w.last()
+            assertTrue("$r last start", abs(l.startMillis - ms(r.getValue("last_start_utc"))) <= 60_000)
+            assertTrue("$r last end", abs(l.endMillis - ms(r.getValue("last_end_utc"))) <= 60_000)
+        }
+    }
+
+    /**
+     * De randen zijn echt (#120): de minuut voor het eerste venster en de minuut waarop het laatste eindigt zijn
+     * niet gezamenlijk, ook als het venster langer dan een dag duurt of na de 30 dagen nog doorloopt. Onafhankelijk
+     * van MutualWindows berekend, rechtstreeks met de maanstand en de obstakels.
+     */
+    @Test
+    fun theFirstStartAndTheLastEndAreRealEdges() {
+        for (r in ExpectedCsv.read("mutual_window")) {
+            val horizon = Horizon.decode(r.getValue("horizon"))!!
+            val margin = r.getValue("margin").toDouble()
+            val home = Maidenhead.toLatLon(r.getValue("home"))!!
+            val dx = Maidenhead.toLatLon(r.getValue("dx"))!!
+            fun ok(t: Long): Boolean {
+                val h = MoonCalculator.position(home.latDeg, home.lonDeg, t)
+                return horizon.visibility(h.azimuthDeg, h.elevationDeg, margin) != Visibility.BLOCKED &&
+                    MoonCalculator.position(dx.latDeg, dx.lonDeg, t).elevationDeg > 0.0
+            }
+            val w = MutualWindows.next(horizon, margin, home.latDeg, home.lonDeg, dx.latDeg, dx.lonDeg, ms(r.getValue("now_utc")))
+            assertTrue("$r first start", ok(w.first().startMillis) && !ok(w.first().startMillis - 60_000))
+            assertTrue("$r last end", ok(w.last().endMillis - 60_000) && !ok(w.last().endMillis))
         }
     }
 

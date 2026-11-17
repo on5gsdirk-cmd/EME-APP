@@ -241,6 +241,14 @@ class LayoutTest(private val device: String, private val language: String, priva
         compose.setContent { EmeTheme { Surface(color = MaterialTheme.colorScheme.background) { EmeApp() } } }
         if (tab != null) {
             compose.onAllNodes(hasText(string(tab)) and hasClickAction()).onFirst().performClick()
+        } else {
+            // Maan-tab: de kaart met de tijden (en met obstakels de vensterregel) wordt op de achtergrond berekend;
+            // waitForIdle wacht daar niet op. Verschijnt ze tijdens het nakijken, dan schuiven de knoppen eronder weg
+            // en meet de test 0x0 (#120).
+            compose.waitUntil(30_000) { compose.onAllNodes(hasText(string(R.string.culmination))).fetchSemanticsNodes().isNotEmpty() }
+            if (!SettingsRepository(ApplicationProvider.getApplicationContext()).horizon.isDefault) {
+                compose.waitUntil(30_000) { compose.onAllNodes(hasTestTag("horizon-window"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+            }
         }
         compose.waitForIdle()
         val tabs = listOf(R.string.tab_moon, R.string.tab_degradation, R.string.tab_chat, R.string.tab_n0uk, R.string.tab_livecq)

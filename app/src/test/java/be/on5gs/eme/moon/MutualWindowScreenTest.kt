@@ -24,6 +24,8 @@ import be.on5gs.eme.settings.SettingsRepository
 import be.on5gs.eme.ui.theme.EmeTheme
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -75,6 +77,22 @@ class MutualWindowScreenTest {
             .assertTextContains("(1296 MHz)", substring = true)
         compose.onNodeWithTag("mutual-pair").assertTextContains("JO21SC  ↔  FN32")
         assertEquals(listOf("FN32"), settings.mutualLocators)                  // onthouden
+    }
+
+    /** 30 dagen vanaf 20 maart 2027 gaan over de zomertijd (28 maart): die vensters tonen hun eigen tijdzone (#120). */
+    @Test
+    fun afterTheChangeToSummerTimeARowShowsItsOwnTimeZone() {
+        // De klok wordt gelezen bij het rekenen; in november en op 20 maart is het allebei wintertijd (CET)
+        AppClock.nowMillis = { Instant.parse("2027-03-20T12:00:00Z").toEpochMilli() }
+        compose.onNodeWithText("(CET)", substring = true).assertExists()
+        compose.onNodeWithTag("mutual-locator").performTextReplacement("FN32")
+        compose.onNodeWithText("Calculate").performClick()
+        waitForRows()
+        val rows = compose.onAllNodesWithTag("mutual-row").fetchSemanticsNodes().map { n ->
+            n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)!!.joinToString(" ") { it.text }
+        }
+        assertFalse(rows.first(), rows.first().contains("CEST"))
+        assertTrue(rows.last(), rows.last().contains(" CEST"))
     }
 
     @Test

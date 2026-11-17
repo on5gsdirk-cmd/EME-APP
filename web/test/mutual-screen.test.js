@@ -43,6 +43,24 @@ describe('"Mutual window" panel', () => {
     expect(JSON.parse(localStorage.getItem('eme.settings')).mutualLocators).toEqual(['FN32']);
   });
 
+  // 30 days from 20 March 2027 cross the change to summer time (28 March): those rows say their own time zone (#120)
+  test('after the change to summer time a row shows its own time zone', async () => {
+    const now = Date.parse('2027-03-20T12:00:00Z');
+    const zone = (ms) => new Intl.DateTimeFormat('en', { timeZoneName: 'short' }).formatToParts(ms).find((p) => p.type === 'timeZoneName').value;
+    const winter = zone(now);
+    const summer = zone(Date.parse('2027-04-10T12:00:00Z'));
+    expect(summer).not.toBe(winter);
+    panel = createMutualPanel({ settings, t, now: () => now, lang: 'en' }, () => {});
+    expect(panel.textContent).toContain(`(${winter})`);
+    type('FN32');
+    q('mutual-calculate').click();
+    await tick();
+    const rows = all('mutual-row').map((r) => r.querySelector('.when').textContent);
+    expect(rows[0]).not.toContain(summer);
+    expect(rows.at(-1)).toContain(` ${summer}`);
+    expect(rows.every((r) => !r.includes(` ${winter} `) && !r.endsWith(winter))).toBe(true);
+  });
+
   test('a wrong locator cannot be calculated', () => {
     type('XX9');
     expect(q('mutual-calculate').disabled).toBe(true);

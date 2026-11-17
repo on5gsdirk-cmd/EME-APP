@@ -58,7 +58,6 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.Locale
 
 /** Venster "Mutual window" (#119), geopend met de knop in de Maan-tab. */
@@ -88,6 +87,9 @@ internal fun MutualWindowContent(settings: SettingsRepository, homeLocator: Stri
     val band = settings.degBand
     val locale = LocalConfiguration.current.locales[0]
     val zone = ZoneId.systemDefault()
+    // Tijdzone op dit moment ("CET" in de winter, "CEST" in de zomer); een venster in de andere toont de zijne (#120)
+    val zoneFormat = remember(locale) { DateTimeFormatter.ofPattern("zzz", locale) }
+    val headZone = zoneFormat.format(Instant.ofEpochMilli(AppClock.now()).atZone(zone))
 
     fun calculate(locator: String) {
         val dx = Maidenhead.toLatLon(locator) ?: return
@@ -121,7 +123,7 @@ internal fun MutualWindowContent(settings: SettingsRepository, homeLocator: Stri
             Text(stringResource(R.string.mutual_title), style = MaterialTheme.typography.titleLarge)
         }
         Text(
-            stringResource(R.string.mutual_info, zone.getDisplayName(TextStyle.SHORT, locale)),
+            stringResource(R.string.mutual_info, headZone),
             style = MaterialTheme.typography.bodySmall,
         )
         if (home == null) {
@@ -166,23 +168,33 @@ internal fun MutualWindowContent(settings: SettingsRepository, homeLocator: Stri
             }
             val dayFormat = remember(locale) { DateTimeFormatter.ofPattern("EEE dd-MM", locale) }
             val hm = remember { DateTimeFormatter.ofPattern("HH:mm") }
-            result.forEach { r -> MutualCard(r, zone, dayFormat, hm, band.mhz) }
+            result.forEach { r -> MutualCard(r, zone, dayFormat, hm, band.mhz, zoneFormat, headZone) }
         }
     }
 }
 
 @Composable
-private fun MutualCard(r: MutualRow, zone: ZoneId, dayFormat: DateTimeFormatter, hm: DateTimeFormatter, mhz: Double) {
+private fun MutualCard(
+    r: MutualRow,
+    zone: ZoneId,
+    dayFormat: DateTimeFormatter,
+    hm: DateTimeFormatter,
+    mhz: Double,
+    zoneFormat: DateTimeFormatter,
+    headZone: String,
+) {
     val w = r.window
     val start = Instant.ofEpochMilli(w.startMillis).atZone(zone)
     val end = Instant.ofEpochMilli(w.endMillis).atZone(zone)
+    // Na de overgang naar of van zomertijd: de tijdzone van dit venster erbij
+    val ownZone = zoneFormat.format(start).let { if (it == headZone) "" else " $it" }
     val plusDays = end.toLocalDate().toEpochDay() - start.toLocalDate().toEpochDay()
     val minutes = (w.endMillis - w.startMillis) / 60_000
     // Eén geheel voor een schermlezer: dag, tijden, duur, elevatie en degradatie
     Card(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag("mutual-row")) {
         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                "${dayFormat.format(start)}   ${hm.format(start)} – ${hm.format(end)}${if (plusDays > 0) " (+$plusDays)" else ""}" +
+                "${dayFormat.format(start)}   ${hm.format(start)} – ${hm.format(end)}${if (plusDays > 0) " (+$plusDays)" else ""}$ownZone" +
                     "   (${minutes / 60}:${String.format(Locale.US, "%02d", minutes % 60)})",
                 fontWeight = FontWeight.Bold,
             )

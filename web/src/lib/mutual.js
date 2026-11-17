@@ -35,10 +35,36 @@ export function mutualWindows(horizon, marginDeg, homeLat, homeLon, dxLat, dxLon
   return out;
 }
 
-/** The mutual windows still running after nowMillis, up to `days` days ahead; searched from 24 h back. */
+/** How far nextMutualWindows looks past the edges for the real start or end; the moon is nowhere up longer than about 14 days. */
+export const EDGE_DAYS = 15;
+
+const isMutual = (horizon, marginDeg, homeLat, homeLon, dxLat, dxLon, t) => {
+  const home = position(homeLat, homeLon, t);
+  return visibility(horizon, home.azimuthDeg, home.elevationDeg, marginDeg) !== VISIBILITY.BLOCKED && position(dxLat, dxLon, t).elevationDeg > 0;
+};
+
+/**
+ * The mutual windows still running after nowMillis that start within `days` days, minute by minute. A window
+ * running now gets its real start (searched back, also further than a day), the last window its real end, also
+ * after the `days` days (#120); both at most EDGE_DAYS away. Same as MutualWindows.next in Kotlin.
+ */
 export function nextMutualWindows(horizon, marginDeg, homeLat, homeLon, dxLat, dxLon, nowMillis, days = 30) {
   const start = nowMillis - (nowMillis % STEP_MS);
-  return mutualWindows(horizon, marginDeg, homeLat, homeLon, dxLat, dxLon, start - DAY_MS, start + days * DAY_MS).filter((w) => w.endMillis > nowMillis);
+  const end = start + days * DAY_MS;
+  // A window running now: back to its real start
+  let from = start;
+  while (from > start - EDGE_DAYS * DAY_MS && isMutual(horizon, marginDeg, homeLat, homeLon, dxLat, dxLon, from - STEP_MS)) from -= STEP_MS;
+  const windows = mutualWindows(horizon, marginDeg, homeLat, homeLon, dxLat, dxLon, from, end);
+  // The last window still open at the end: on until it really closes
+  const last = windows.at(-1);
+  if (last && last.endMillis === end) {
+    const rest = mutualWindows(horizon, marginDeg, homeLat, homeLon, dxLat, dxLon, end, end + EDGE_DAYS * DAY_MS)[0];
+    if (rest && rest.startMillis === end) {
+      const higher = rest.maxElDeg > last.maxElDeg ? rest : last;
+      windows[windows.length - 1] = { ...last, endMillis: rest.endMillis, maxElDeg: higher.maxElDeg, maxAtMillis: higher.maxAtMillis, partial: last.partial || rest.partial };
+    }
+  }
+  return windows.filter((w) => w.endMillis > nowMillis);
 }
 
 /** The last locators used for the mutual window: newest first, no duplicates, at most max (as addRecentLocator in Kotlin). */

@@ -19,13 +19,38 @@ const role = (node, r) => {
 const two = (n) => String(n).padStart(2, '0');
 const condClass = (condition) => `cond-${condition.toLowerCase().replace('_', '-')}`;
 
-/** Short name of the local time zone ("CET"), as in the Moon tab. */
+/**
+ * nextMutualWindows in a Web Worker, so the page does not freeze (#120); without Worker support (or when it
+ * fails) on the main thread after one tick, so "Calculating…" shows first.
+ */
+function computeWindows(args) {
+  const direct = () => nextMutualWindows(...args);
+  return new Promise((resolve) => {
+    if (typeof Worker === 'undefined') {
+      setTimeout(() => resolve(direct()), 0);
+      return;
+    }
+    const worker = new Worker(new URL('../lib/mutual-worker.js', import.meta.url), { type: 'module' });
+    const done = (result) => {
+      worker.terminate();
+      resolve(result);
+    };
+    worker.onmessage = (e) => done(e.data);
+    worker.onerror = () => done(direct());
+    worker.postMessage(args);
+  });
+}
+
+/** Short name of the local time zone at that moment ("CET" in winter, "CEST" in summer). */
 function zoneName(nowMs, lang) {
   return new Intl.DateTimeFormat(lang, { timeZoneName: 'short' }).formatToParts(nowMs).find((p) => p.type === 'timeZoneName')?.value ?? '';
 }
 
-/** One table row (card): day, local times with "(+1)" past midnight, duration, max. EL and Deg. */
-function card(w, deg, mhz, lang, t) {
+/**
+ * One table row (card): day, local times with "(+1)" past midnight, duration, max. EL and Deg. The time zone
+ * of the window when it is not the one in the heading (after a change to or from summer time, #120).
+ */
+function card(w, deg, mhz, lang, t, headZone) {
   const s = new Date(w.startMillis);
   const e = new Date(w.endMillis);
   const day = `${new Intl.DateTimeFormat(lang, { weekday: 'short' }).format(s)} ${two(s.getDate())}-${two(s.getMonth() + 1)}`;
@@ -33,9 +58,10 @@ function card(w, deg, mhz, lang, t) {
   const plus = dayIndex(e) - dayIndex(s);
   const minutes = Math.round((w.endMillis - w.startMillis) / 60_000);
   const hm = (d) => `${two(d.getHours())}:${two(d.getMinutes())}`;
+  const zone = zoneName(w.startMillis, lang);
   const row = role(el('div', 'card mutual-row'), 'mutual-row');
   row.append(
-    el('div', 'when', `${day}   ${hm(s)} – ${hm(e)}${plus > 0 ? ` (+${plus})` : ''}   (${Math.floor(minutes / 60)}:${two(minutes % 60)})`),
+    el('div', 'when', `${day}   ${hm(s)} – ${hm(e)}${plus > 0 ? ` (+${plus})` : ''}${zone !== headZone ? ` ${zone}` : ''}   (${Math.floor(minutes / 60)}:${two(minutes % 60)})`),
     el('div', `max ${condClass(deg.condition)}`, t('mutual_max', w.maxElDeg.toFixed(1), deg.degDb.toFixed(1), String(mhz))),
   );
   if (w.partial) row.append(el('div', 'partial small', t('mutual_partial')));
@@ -44,7 +70,7 @@ function card(w, deg, mhz, lang, t) {
 
 /**
  * The panel, shown over the Moon tab. ctx: { settings, t, now, lang }; onClose() removes it.
- * Calculating 30 days takes a few hundred ms, so it starts after one tick to show "Calculating…" first.
+ * Calculating 30 days takes a few hundred ms: in a Web Worker, "Calculating…" shows meanwhile.
  */
 export function createMutualPanel({ settings, t, now, lang }, onClose) {
   const home = toLatLon(settings.locator);
@@ -56,7 +82,8 @@ export function createMutualPanel({ settings, t, now, lang }, onClose) {
   const back = role(el('button', 'text-button', `← ${t('back')}`), 'mutual-back');
   back.type = 'button';
   back.addEventListener('click', onClose);
-  panel.append(back, el('h2', '', t('mutual_title')), el('div', 'support', t('mutual_info', zoneName(now(), lang))));
+  const headZone = zoneName(now(), lang);
+  panel.append(back, el('h2', '', t('mutual_title')), el('div', 'support', t('mutual_info', headZone)));
   if (!home) {
     panel.append(el('div', 'error', t('no_locator')));
     return panel;
@@ -102,15 +129,14 @@ export function createMutualPanel({ settings, t, now, lang }, onClose) {
     status.textContent = t('mutual_calculating');
     results.replaceChildren();
     refresh();
-    setTimeout(() => {
-      const horizon = settings.horizon ?? defaultHorizon();
-      const ws = nextMutualWindows(horizon, marginForSettings(settings, EME_BANDS), home.latDeg, home.lonDeg, dx.latDeg, dx.lonDeg, now());
+    const horizon = settings.horizon ?? defaultHorizon();
+    computeWindows([horizon, marginForSettings(settings, EME_BANDS), home.latDeg, home.lonDeg, dx.latDeg, dx.lonDeg, now()]).then((ws) => {
       const pair = role(el('h3', '', `${settings.locator}  ↔  ${normalize(locator)}`), 'mutual-pair');
       results.replaceChildren(pair);
       if (ws.length === 0) results.append(role(el('div', '', t('mutual_none')), 'mutual-none'));
       for (const w of ws) {
         const deg = computeDegradation(w.maxAtMillis, home.latDeg, home.lonDeg, band, band.defaultTsys);
-        results.append(card(w, deg, band.mhz, lang, t));
+        results.append(card(w, deg, band.mhz, lang, t, headZone));
       }
       recent = addRecentLocator(recent, normalize(locator));
       settings.mutualLocators = recent;
@@ -118,7 +144,7 @@ export function createMutualPanel({ settings, t, now, lang }, onClose) {
       busy = false;
       status.textContent = '';
       refresh();
-    }, 0);
+    });
   }
 
   input.addEventListener('input', () => {
