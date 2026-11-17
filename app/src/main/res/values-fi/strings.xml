@@ -130,4 +130,14 @@
     <string name="horizon_load_error">Tämä tiedosto ei ole horizon.dl6zg.de:n mittaus (JSON tai CSV).</string>
     <string name="horizon_load_few">Liian vähän pisteitä tiedostossa (vähintään 2).</string>
     <string name="horizon_load_gaps">Ei mitattu, jätetty avoimeksi: %1$s.</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">Yhteinen kuuikkuna</string>
+    <string name="mutual_info">Milloin kuu on yhtä aikaa ylhäällä molemmilla asemilla: sinulla vapaana esteistäsi, toisella asemalla horisontin yllä. Seuraavat 30 päivää, ajat paikallista aikaa (%1$s).</string>
+    <string name="mutual_locator">Toisen aseman lokaattori</string>
+    <string name="mutual_calculate">Laske</string>
+    <string name="mutual_recent">Viimeisimmät</string>
+    <string name="mutual_none">Ei yhteistä ikkunaa seuraavan 30 päivän aikana.</string>
+    <string name="mutual_max">Suurin EL %1$s° · Deg %2$s dB (%3$s MHz)</string>
+    <string name="mutual_partial">osittain esteidesi takana</string>
+    <string name="mutual_calculating">Lasketaan…</string>
 </resources>

@@ -57,6 +57,17 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun recentMutualLocatorsAreKeptAndInvalidOnesDropped() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        assertEquals(emptyList<String>(), SettingsRepository(context).mutualLocators)
+        SettingsRepository(context).mutualLocators = listOf("FN32", "QF22")
+        assertEquals(listOf("FN32", "QF22"), SettingsRepository(context).mutualLocators)
+        context.getSharedPreferences("eme_settings", android.content.Context.MODE_PRIVATE)
+            .edit().putString("mutual_locators", "FN32,xx,,QF22,RE78,JO21,KO85,PM95").commit()
+        assertEquals(listOf("FN32", "QF22", "RE78", "JO21", "KO85"), SettingsRepository(context).mutualLocators)
+    }
+
+    @Test
     fun dishBandDefaultsTo1296AndIsKept() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         assertEquals(be.on5gs.eme.degradation.EmeBand.B1296, SettingsRepository(context).dishBand)

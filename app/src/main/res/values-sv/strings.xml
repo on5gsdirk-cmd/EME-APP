@@ -130,4 +130,14 @@
     <string name="horizon_load_error">Den här filen är ingen mätning från horizon.dl6zg.de (JSON eller CSV).</string>
     <string name="horizon_load_few">För få punkter i filen (minst 2 behövs).</string>
     <string name="horizon_load_gaps">Inte uppmätt, lämnat öppet: %1$s.</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">Gemensamt månfönster</string>
+    <string name="mutual_info">När månen är uppe samtidigt vid båda stationerna: hos dig fri från dina hinder, vid den andra stationen över horisonten. De kommande 30 dagarna, tider i lokal tid (%1$s).</string>
+    <string name="mutual_locator">Lokator för den andra stationen</string>
+    <string name="mutual_calculate">Beräkna</string>
+    <string name="mutual_recent">Senaste</string>
+    <string name="mutual_none">Inget gemensamt fönster de kommande 30 dagarna.</string>
+    <string name="mutual_max">Max EL %1$s° · Deg %2$s dB (%3$s MHz)</string>
+    <string name="mutual_partial">delvis bakom dina hinder</string>
+    <string name="mutual_calculating">Beräknar…</string>
 </resources>

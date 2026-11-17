@@ -130,4 +130,14 @@
     <string name="horizon_load_error">此文件不是 horizon.dl6zg.de 的测量（JSON 或 CSV）。</string>
     <string name="horizon_load_few">此文件中的点太少（至少需要 2 个）。</string>
     <string name="horizon_load_gaps">未测量，保持开放：%1$s。</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">共同月窗</string>
+    <string name="mutual_info">两站同时能看到月亮的时间：您这边高于您的障碍物，另一站高于地平线。未来 30 天，时间为本地时间（%1$s）。</string>
+    <string name="mutual_locator">另一站的网格定位</string>
+    <string name="mutual_calculate">计算</string>
+    <string name="mutual_recent">最近</string>
+    <string name="mutual_none">未来 30 天内没有共同月窗。</string>
+    <string name="mutual_max">最高仰角 %1$s° · Deg %2$s dB（%3$s MHz）</string>
+    <string name="mutual_partial">部分被您的障碍物遮挡</string>
+    <string name="mutual_calculating">正在计算…</string>
 </resources>

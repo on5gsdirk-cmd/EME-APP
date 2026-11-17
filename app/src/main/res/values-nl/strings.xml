@@ -130,4 +130,14 @@
     <string name="horizon_load_error">Dit bestand is geen opmeting van horizon.dl6zg.de (JSON of CSV).</string>
     <string name="horizon_load_few">Te weinig punten in dit bestand (minstens 2 nodig).</string>
     <string name="horizon_load_gaps">Niet gemeten, open gelaten: %1$s.</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">Gezamenlijk maanvenster</string>
+    <string name="mutual_info">Wanneer de maan tegelijk op staat bij beide stations: bij jou vrij van je obstakels, bij het andere station boven de horizon. De komende 30 dagen, tijden in lokale tijd (%1$s).</string>
+    <string name="mutual_locator">Locator van het andere station</string>
+    <string name="mutual_calculate">Berekenen</string>
+    <string name="mutual_recent">Recent</string>
+    <string name="mutual_none">Geen gezamenlijk venster in de komende 30 dagen.</string>
+    <string name="mutual_max">Max. EL %1$s° · Deg %2$s dB (%3$s MHz)</string>
+    <string name="mutual_partial">deels achter je obstakels</string>
+    <string name="mutual_calculating">Bezig met berekenen…</string>
 </resources>

@@ -377,3 +377,12 @@ body {
 .horizon .button-row.wrap { flex-wrap: wrap; }
 .horizon a.button { display: inline-flex; align-items: center; text-decoration: none; }
 .horizon .message.error { color: var(--error); }
+
+/* Mutual window (#119): a full panel over the Moon tab */
+.moon .mutual-open { margin-top: 12px; }
+.mutual-panel { position: fixed; inset: 0; z-index: 10; overflow-y: auto; background: var(--surface); padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.mutual-panel .chips.recent { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mutual-panel .chip { font: inherit; font-size: 14px; min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--on-surface-variant); background: none; color: var(--on-surface); cursor: pointer; }
+.mutual-panel .mutual-row { padding: 10px; border-radius: 12px; background: var(--surface-variant); margin: 6px 0; }
+.mutual-panel .mutual-row .when { font-weight: 700; }
+.mutual-panel .mutual-row .partial { color: #ffa726; }

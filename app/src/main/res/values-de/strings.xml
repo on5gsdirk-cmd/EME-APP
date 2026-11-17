@@ -130,4 +130,14 @@
     <string name="horizon_load_error">Diese Datei ist keine Vermessung von horizon.dl6zg.de (JSON oder CSV).</string>
     <string name="horizon_load_few">Zu wenige Punkte in dieser Datei (mindestens 2).</string>
     <string name="horizon_load_gaps">Nicht vermessen, offen gelassen: %1$s.</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">Gemeinsames Mondfenster</string>
+    <string name="mutual_info">Wann der Mond bei beiden Stationen gleichzeitig aufgegangen ist: bei dir frei von deinen Hindernissen, bei der anderen Station über dem Horizont. Die nächsten 30 Tage, Zeiten in Ortszeit (%1$s).</string>
+    <string name="mutual_locator">Locator der anderen Station</string>
+    <string name="mutual_calculate">Berechnen</string>
+    <string name="mutual_recent">Zuletzt</string>
+    <string name="mutual_none">Kein gemeinsames Fenster in den nächsten 30 Tagen.</string>
+    <string name="mutual_max">Max. EL %1$s° · Deg %2$s dB (%3$s MHz)</string>
+    <string name="mutual_partial">teilweise hinter deinen Hindernissen</string>
+    <string name="mutual_calculating">Wird berechnet…</string>
 </resources>

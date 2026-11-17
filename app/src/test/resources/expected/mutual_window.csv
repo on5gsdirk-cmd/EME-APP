@@ -1,0 +1,13 @@
+# Mutual moon windows (#119): horizon/MutualWindows.kt and web/src/lib/mutual.js. Moon clear at home (own obstacles,
+# minimum and dish margin) and above 0 deg at the other station, minute by minute, searched from 24 h before now_utc
+# to 30 days after it; count = windows still running after now. first_* = the first of them: start and end to within
+# 1 minute, max_el = highest point of the lower of the two moon elevations (within 0.05 deg), partial = the moon
+# passes a partial obstacle at home in it. Computed with this code; checked independently in the tests.
+home,horizon,margin,dx,now_utc,count,first_start_utc,first_end_utc,first_max_el,first_max_at_utc,first_partial
+JO21SC,1;0,0,FN32,2026-11-20T12:00:00Z,29,2026-11-20T18:58:00Z,2026-11-21T02:49:00Z,36.54,2026-11-20T22:25:00Z,false
+JO21SC,1;5;B 60 110 25;P 180 200 20,1.349,FN32,2026-11-20T12:00:00Z,29,2026-11-20T18:58:00Z,2026-11-21T02:06:00Z,36.54,2026-11-20T22:25:00Z,false
+JO21SC,1;0,0,QF22,2026-11-20T12:00:00Z,29,2026-11-20T13:34:00Z,2026-11-20T16:16:00Z,13.88,2026-11-20T15:03:00Z,false
+JO21SC,1;5;B 60 110 25;P 180 200 20,0,RE78,2026-11-20T12:00:00Z,4,2026-11-24T15:46:00Z,2026-11-24T16:10:00Z,4.61,2026-11-24T15:46:00Z,false
+JO21SC,1;0,0,JO21SC,2026-11-20T12:00:00Z,29,2026-11-20T13:34:00Z,2026-11-21T02:49:00Z,44.50,2026-11-20T20:07:00Z,false
+JO21SC,1;5;B 60 110 25;P 180 200 20,0,JO62QM,2027-01-04T00:00:00Z,33,2027-01-04T06:18:00Z,2027-01-04T11:29:00Z,10.41,2027-01-04T08:21:00Z,true
+JO21SC,1;0,0,FN32,2026-11-21T00:00:00Z,30,2026-11-20T18:58:00Z,2026-11-21T02:49:00Z,36.54,2026-11-20T22:25:00Z,false

@@ -136,4 +136,14 @@
     <string name="horizon_load_error">This file is not a survey from horizon.dl6zg.de (JSON or CSV).</string>
     <string name="horizon_load_few">Too few points in this file (at least 2 are needed).</string>
     <string name="horizon_load_gaps">Not measured, left open: %1$s.</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">Mutual moon window</string>
+    <string name="mutual_info">When the moon is up at both stations at the same time: at yours clear of your obstacles, at the other station above the horizon. The next 30 days, times in local time (%1$s).</string>
+    <string name="mutual_locator">Locator of the other station</string>
+    <string name="mutual_calculate">Calculate</string>
+    <string name="mutual_recent">Recent</string>
+    <string name="mutual_none">No mutual window in the next 30 days.</string>
+    <string name="mutual_max">Max. EL %1$s° · Deg %2$s dB (%3$s MHz)</string>
+    <string name="mutual_partial">partly behind your obstacles</string>
+    <string name="mutual_calculating">Calculating…</string>
 </resources>

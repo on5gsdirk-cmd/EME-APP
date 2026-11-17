@@ -130,4 +130,14 @@
     <string name="horizon_load_error">Questo file non è un rilievo di horizon.dl6zg.de (JSON o CSV).</string>
     <string name="horizon_load_few">Troppo pochi punti in questo file (ne servono almeno 2).</string>
     <string name="horizon_load_gaps">Non misurato, lasciato aperto: %1$s.</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">Finestra lunare comune</string>
+    <string name="mutual_info">Quando la luna è sorta contemporaneamente in entrambe le stazioni: da te libera dai tuoi ostacoli, all\'altra stazione sopra l\'orizzonte. I prossimi 30 giorni, orari in ora locale (%1$s).</string>
+    <string name="mutual_locator">Locator dell\'altra stazione</string>
+    <string name="mutual_calculate">Calcola</string>
+    <string name="mutual_recent">Recenti</string>
+    <string name="mutual_none">Nessuna finestra comune nei prossimi 30 giorni.</string>
+    <string name="mutual_max">EL max %1$s° · Deg %2$s dB (%3$s MHz)</string>
+    <string name="mutual_partial">in parte dietro i tuoi ostacoli</string>
+    <string name="mutual_calculating">Calcolo in corso…</string>
 </resources>

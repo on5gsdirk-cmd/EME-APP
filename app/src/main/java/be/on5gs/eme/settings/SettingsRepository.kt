@@ -1,5 +1,6 @@
 package be.on5gs.eme.settings
 
+import be.on5gs.eme.location.Maidenhead
 import android.content.Context
 import be.on5gs.eme.chat.Hb9qBand
 import be.on5gs.eme.cq.Band
@@ -55,7 +56,13 @@ class SettingsRepository(context: Context) {
         get() = EmeBand.entries.firstOrNull { it.name == prefs.getString(KEY_DISH_BAND, null) } ?: EmeBand.B1296
         set(value) = prefs.edit().putString(KEY_DISH_BAND, value.name).apply()
 
+    /** De laatst gebruikte locators in het mutual window (nieuwste vooraan, hoogstens 5); onleesbare vallen weg. */
+    var mutualLocators: List<String>
+        get() = (prefs.getString(KEY_MUTUAL, null) ?: "").split(",").filter { Maidenhead.isValid(it) && it.isNotEmpty() }.take(5)
+        set(value) = prefs.edit().putString(KEY_MUTUAL, value.take(5).joinToString(",")).apply()
+
     companion object {
+        private const val KEY_MUTUAL = "mutual_locators"
         private const val KEY_DISH_BAND = "dish_band"
         private const val KEY_DISH = "dish_diameter_m"
         private const val KEY_HORIZON = "horizon"

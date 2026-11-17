@@ -130,4 +130,14 @@
     <string name="horizon_load_error">Este ficheiro não é uma medição de horizon.dl6zg.de (JSON ou CSV).</string>
     <string name="horizon_load_few">Poucos pontos neste ficheiro (são precisos pelo menos 2).</string>
     <string name="horizon_load_gaps">Não medido, deixado aberto: %1$s.</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">Janela lunar comum</string>
+    <string name="mutual_info">Quando a lua está nascida ao mesmo tempo nas duas estações: na sua livre dos seus obstáculos, na outra estação acima do horizonte. Os próximos 30 dias, horas em hora local (%1$s).</string>
+    <string name="mutual_locator">Locator da outra estação</string>
+    <string name="mutual_calculate">Calcular</string>
+    <string name="mutual_recent">Recentes</string>
+    <string name="mutual_none">Nenhuma janela comum nos próximos 30 dias.</string>
+    <string name="mutual_max">EL máx. %1$s° · Deg %2$s dB (%3$s MHz)</string>
+    <string name="mutual_partial">em parte atrás dos seus obstáculos</string>
+    <string name="mutual_calculating">A calcular…</string>
 </resources>

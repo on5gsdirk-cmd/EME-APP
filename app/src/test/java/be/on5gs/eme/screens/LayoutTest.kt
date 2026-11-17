@@ -1,5 +1,6 @@
 package be.on5gs.eme.screens
 
+import androidx.compose.ui.test.hasTestTag
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import androidx.activity.ComponentActivity
@@ -188,6 +189,20 @@ class LayoutTest(private val device: String, private val language: String, priva
         compose.onAllNodes(hasContentDescription(string(R.string.settings)) and hasClickAction()).onFirst().performClick()
         compose.onAllNodes(hasText(string(R.string.horizon_edit)) and hasClickAction()).onFirst().performScrollTo().performClick()
         compose.waitForIdle()
+        checkLayout()
+    }
+
+    /** "Mutual window" (#119) met de vensters met FN32 en twee recente locators. */
+    @Test
+    fun mutualWindow() {
+        val settings = SettingsRepository(ApplicationProvider.getApplicationContext())
+        settings.mutualLocators = listOf("FN32", "QF22")
+        compose.setContent {
+            EmeTheme { Surface(color = MaterialTheme.colorScheme.background) { be.on5gs.eme.moon.MutualWindowContent(settings, "JO21SC") {} } }
+        }
+        compose.onAllNodes(hasTestTag("mutual-locator")).onFirst().assertExists()
+        compose.onAllNodes(hasText(string(R.string.mutual_calculate)) and hasClickAction()).onFirst().performClick()
+        compose.waitUntil(30_000) { compose.onAllNodes(hasTestTag("mutual-row")).fetchSemanticsNodes().isNotEmpty() }
         checkLayout()
     }
 

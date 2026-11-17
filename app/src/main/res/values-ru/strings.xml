@@ -130,4 +130,14 @@
     <string name="horizon_load_error">Этот файл не является измерением с horizon.dl6zg.de (JSON или CSV).</string>
     <string name="horizon_load_few">Слишком мало точек в файле (нужно не меньше 2).</string>
     <string name="horizon_load_gaps">Не измерено, оставлено открытым: %1$s.</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">Общее лунное окно</string>
+    <string name="mutual_info">Когда Луна одновременно над горизонтом у обеих станций: у вас над вашими препятствиями, у другой станции над горизонтом. Ближайшие 30 дней, время местное (%1$s).</string>
+    <string name="mutual_locator">Локатор другой станции</string>
+    <string name="mutual_calculate">Рассчитать</string>
+    <string name="mutual_recent">Недавние</string>
+    <string name="mutual_none">Нет общего окна в ближайшие 30 дней.</string>
+    <string name="mutual_max">Макс. EL %1$s° · Deg %2$s дБ (%3$s МГц)</string>
+    <string name="mutual_partial">частично за вашими препятствиями</string>
+    <string name="mutual_calculating">Расчёт…</string>
 </resources>

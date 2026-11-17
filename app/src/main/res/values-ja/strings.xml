@@ -130,4 +130,14 @@
     <string name="horizon_load_error">このファイルは horizon.dl6zg.de の測定（JSON または CSV）ではありません。</string>
     <string name="horizon_load_few">このファイルの点が少なすぎます（2 点以上必要）。</string>
     <string name="horizon_load_gaps">未測定のため開放のまま: %1$s。</string>
+    <string name="mutual_button">Mutual window</string>
+    <string name="mutual_title">共通の月ウィンドウ</string>
+    <string name="mutual_info">両局で同時に月が見える時間: あなたの局では障害物より上、相手局では地平線より上。今後 30 日間、時刻は現地時間（%1$s）。</string>
+    <string name="mutual_locator">相手局のロケーター</string>
+    <string name="mutual_calculate">計算</string>
+    <string name="mutual_recent">最近</string>
+    <string name="mutual_none">今後 30 日間に共通ウィンドウはありません。</string>
+    <string name="mutual_max">最大 EL %1$s° · Deg %2$s dB（%3$s MHz）</string>
+    <string name="mutual_partial">一部障害物の陰</string>
+    <string name="mutual_calculating">計算中…</string>
 </resources>

@@ -11,6 +11,7 @@ const DEFAULTS = {
   horizon: { minElDeg: 0, obstacles: [] },
   dishDiameterM: 0,
   dishBand: 'B1296',
+  mutualLocators: [],
 };
 
 function fakeStorage() {
@@ -104,6 +105,7 @@ describe('saveSettings', () => {
       horizon: { minElDeg: 0, obstacles: [] },
       dishDiameterM: 0,
       dishBand: 'B1296',
+      mutualLocators: [],
     });
   });
 
@@ -170,5 +172,14 @@ describe('dish diameter', () => {
     expect(loadSettings().dishBand).toBe('B432');
     localStorage.setItem('eme.settings', JSON.stringify({ dishBand: 'B10G' }));
     expect(loadSettings().dishBand).toBe('B1296');
+  });
+});
+
+describe('recent mutual window locators', () => {
+  test('are kept; invalid ones and more than 5 are dropped', () => {
+    saveSettings({ mutualLocators: ['FN32', 'QF22'] });
+    expect(loadSettings().mutualLocators).toEqual(['FN32', 'QF22']);
+    localStorage.setItem('eme.settings', JSON.stringify({ mutualLocators: ['FN32', 'xx', 5, '', 'QF22', 'RE78', 'JO21', 'KO85', 'PM95'] }));
+    expect(loadSettings().mutualLocators).toEqual(['FN32', 'QF22', 'RE78', 'JO21', 'KO85']);
   });
 });

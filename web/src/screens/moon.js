@@ -3,6 +3,7 @@
 
 import { liveCqStore } from '../data.js';
 import { effectiveLanguage, locatorLatLon } from '../settings.js';
+import { createMutualPanel } from './mutual.js';
 import { VISIBILITY, currentOrNextWindow, defaultHorizon, isDefaultHorizon, marginForSettings, visibility } from '../lib/horizon.js';
 import { EME_BANDS } from '../lib/degradation.js';
 import { BANDS, selectSpots, stationLatLon } from '../lib/livecq.js';
@@ -122,7 +123,14 @@ export function createMoonScreen() {
       const distance = tagged(el('div', 'distance'), 'distance');
       const horizonNow = tagged(el('div', 'horizon-now'), 'horizon-now');
       const events = el('div', 'events');
-      root.append(canvas, legend, phase, where, bigValues, distance, ...(withHorizon ? [horizonNow] : []), events);
+      // Mutual moon window with another station (#119): a panel over the Moon tab
+      const mutualOpen = tagged(el('button', 'button outlined mutual-open', t('mutual_button')), 'mutual-open');
+      mutualOpen.type = 'button';
+      mutualOpen.addEventListener('click', () => {
+        const panel = createMutualPanel({ settings, t, now: ctx.now, lang }, () => panel.remove());
+        root.append(panel);
+      });
+      root.append(canvas, legend, phase, where, bigValues, distance, ...(withHorizon ? [horizonNow] : []), events, mutualOpen);
 
       let eventData = null;
       let windowData = null;

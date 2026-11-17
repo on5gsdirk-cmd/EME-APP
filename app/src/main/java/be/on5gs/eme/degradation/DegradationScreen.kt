@@ -70,7 +70,7 @@ private const val CENTER_INDEX = 15
 internal var currentComputeCallsForTest = 0
 
 /** Kleur per beoordeling. */
-private fun Condition.color(): Color = when (this) {
+internal fun Condition.color(): Color = when (this) {
     Condition.EXCELLENT -> Color(0xFF00E676)
     Condition.GOOD -> Color(0xFFB2FF59)
     Condition.FAIR -> Color(0xFFFFEB3B)
