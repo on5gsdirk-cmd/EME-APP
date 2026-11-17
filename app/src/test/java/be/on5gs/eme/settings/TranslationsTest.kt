@@ -10,7 +10,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 class TranslationsTest {
 
     private val res = File("src/main/res")
-    private val languages = listOf("nl", "fr", "de", "es", "it", "pt", "sv", "da", "fi", "ru", "zh", "ja")
+    private val languages = listOf("nl", "fr", "de", "es", "it", "pt", "sv", "da", "fi", "cs", "ru", "uk", "zh", "ja")
 
     private fun read(folder: String): Map<String, String> {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(File(res, "$folder/strings.xml"))
@@ -47,7 +47,7 @@ class TranslationsTest {
     @Test
     fun everyLanguageInPickerHasFolder() {
         val codes = AppLanguage.options.map { it.first }
-        assertEquals(13, codes.size)
+        assertEquals(15, codes.size)
         for (c in codes) assertTrue("map voor $c", c == "en" || File(res, "values-$c/strings.xml").exists())
     }
 }

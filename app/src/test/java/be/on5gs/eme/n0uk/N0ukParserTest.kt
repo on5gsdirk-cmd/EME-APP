@@ -72,10 +72,10 @@ class N0ukParserTest {
         // Op 10 november om 16:20 UTC: venster 60 minuten
         val t = Instant.parse("2026-11-10T16:20:00Z").toEpochMilli()
         val cqs = N0ukCqParser.recent(N0ukParser.parse(page, t), t, 60)
-        assertEquals(listOf("16:11", "15:30"), cqs.map { it.time })
+        // F4HBY riep om 15:30 (om 15:57 gestopt) en om 16:11: alleen de meest recente (#124)
+        assertEquals(listOf("16:11"), cqs.map { it.time })
         assertTrue(cqs.all { it.callsign == "F4HBY" && it.freq == "144.131" && it.mode == "JT65B" && it.period == "1st" })
         assertFalse("16:11 is nog bezig", cqs[0].ended)
-        assertTrue("15:30 werd om 15:57 gestopt", cqs[1].ended)
         assertEquals("IN97at", cqs[0].locator)
     }
 

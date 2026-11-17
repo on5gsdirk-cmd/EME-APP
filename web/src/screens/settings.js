@@ -9,7 +9,7 @@ import { defaultHorizon } from '../lib/horizon.js';
 /** Port of AppLanguage.options (native names, as in the language picker of the app). */
 const LANGUAGE_NAMES = {
   nl: 'Nederlands', fr: 'Français', en: 'English', de: 'Deutsch', es: 'Español', it: 'Italiano', pt: 'Português',
-  sv: 'Svenska', da: 'Dansk', fi: 'Suomi', ru: 'Русский', zh: '中文', ja: '日本語',
+  sv: 'Svenska', da: 'Dansk', fi: 'Suomi', cs: 'Čeština', ru: 'Русский', uk: 'Українська', zh: '中文', ja: '日本語',
 };
 
 const RELEASE_NOTES_URL = `https://github.com/on5gsdirk-cmd/EME-APP/releases/tag/v${__APP_VERSION__}`;

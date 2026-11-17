@@ -46,10 +46,10 @@ The web app (`web/`) has its own tests. They need Node 24 and Go (the version in
 
 - **Tests.** A change in logic (parsers, calculations, stores) comes with a unit test in
   `app/src/test/`. A bug fix comes with a test that fails without the fix.
-- **Translations.** A new or changed text goes into all 13 `strings.xml` files
+- **Translations.** A new or changed text goes into all 15 `strings.xml` files
   (`app/src/main/res/values*/`). `TranslationsTest` fails when a language is missing a text
   or has different placeholders than the English one.
-- **Layout.** `LayoutTest` renders every screen in all 13 languages on a small phone with a large
+- **Layout.** `LayoutTest` renders every screen in all 15 languages on a small phone with a large
   font, and in English on a phone and a tablet. It fails on text that is cut off, an element
   outside the screen or a touch target under 48 dp, and writes a picture of each failing screen
   to `app/build/layout-failures/`. A known problem goes into its `KNOWN` list only with an issue.

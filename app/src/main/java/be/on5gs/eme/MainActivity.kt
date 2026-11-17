@@ -44,6 +44,7 @@ import be.on5gs.eme.settings.CredentialStore
 import be.on5gs.eme.settings.SettingsRepository
 import be.on5gs.eme.settings.SettingsScreen
 import be.on5gs.eme.ui.theme.EmeTheme
+import be.on5gs.eme.update.UpdateBar
 import be.on5gs.eme.ui.theme.FixedFontScale
 import androidx.compose.ui.unit.sp
 
@@ -129,6 +130,7 @@ fun EmeApp() {
                     showSettings = false
                 }
             } else {
+                UpdateBar(settings)
                 // Tabnamen altijd op één regel, ook bij een grote systeem-lettergrootte
                 FixedFontScale {
                     TabRow(selectedTabIndex = tab) {

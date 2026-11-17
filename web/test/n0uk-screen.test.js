@@ -9,7 +9,7 @@ import { setLanguage, t } from '../src/i18n.js';
 import { callsTo, fails, ok, resource, status, stubFetch } from './fetch-stub.js';
 
 const N0UK = '/api/n0uk';
-const NOW = Date.parse('2026-11-10T16:20:00Z'); // two CQs of F4HBY in the last hour, the older one stopped
+const NOW = Date.parse('2026-11-10T16:20:00Z'); // two CQs of F4HBY in the last hour (the older one stopped): only the newest shows
 const page = resource('n0uk_jt65emeA.html');
 
 let host;
@@ -94,15 +94,15 @@ describe('N0UK screen: QRV', () => {
 });
 
 describe('N0UK screen: Chat CQ', () => {
-  test('lists the CQs of the last 60 minutes, the stopped one greyed out', async () => {
+  test('lists the CQs of the last 60 minutes, one per station: its most recent', async () => {
     await mount();
     subtab(2).click();
     const cqs = recentCqs(parseN0uk(page, NOW), NOW, 60);
-    expect(cqs.map((c) => c.time)).toEqual(['16:11', '15:30']);
-    expect(host.textContent).toContain(t('n0uk_cq_title', 2));
+    expect(cqs.map((c) => c.time)).toEqual(['16:11']);
+    expect(host.textContent).toContain(t('n0uk_cq_title', 1));
     const rows = [...host.querySelectorAll('[data-role="cq"]')];
-    expect(rows).toHaveLength(2);
-    expect(rows.map((r) => r.classList.contains('ended'))).toEqual([false, true]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].classList.contains('ended')).toBe(false);
     const cells = [...rows[0].children].map((c) => c.textContent);
     expect(cells.slice(0, 6)).toEqual(['16:11', '144.131', '1st', 'F4HBY', 'JT65B', 'IN97at']);
     const sub = subLunarPoint(NOW);
@@ -110,6 +110,15 @@ describe('N0UK screen: Chat CQ', () => {
     const el = quickElevationDeg(sub, p.latDeg, p.lonDeg);
     expect(cells[6]).toBe(el > 0 ? `↑${el.toFixed(0)}°` : '↓');
     expect(host.querySelector('[data-role="cq-header"]').textContent).toBe(t('n0uk_cq_header').split(' - ').join(''));
+  });
+
+  test('a CQ stopped with "stop cq" is greyed out (16:05: F4HBY called at 15:30 and stopped at 15:57)', async () => {
+    vi.setSystemTime(Date.parse('2026-11-10T16:05:00Z'));
+    await mount();
+    subtab(2).click();
+    const rows = [...host.querySelectorAll('[data-role="cq"]')];
+    expect(rows.map((r) => r.children[0].textContent)).toEqual(['15:30']);
+    expect(rows[0].classList.contains('ended')).toBe(true);
   });
 
   test('without a locator the moon cell is "?", never NaN', async () => {

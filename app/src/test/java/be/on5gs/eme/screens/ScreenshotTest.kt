@@ -35,6 +35,8 @@ import be.on5gs.eme.ui.theme.EmeTheme
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
+import org.junit.After
+import be.on5gs.eme.update.UpdateCheck
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -53,6 +55,19 @@ class ScreenshotTest {
 
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
+
+    private val fetchUpdate = UpdateCheck.fetchLatest
+
+    /** Geen aanvraag aan GitHub vanuit de tests (#126). */
+    @org.junit.Before
+    fun noUpdateRequest() {
+        UpdateCheck.fetchLatest = { error("no network in tests") }
+    }
+
+    @After
+    fun restoreUpdateRequest() {
+        UpdateCheck.fetchLatest = fetchUpdate
+    }
 
     @Before
     fun setUp() {

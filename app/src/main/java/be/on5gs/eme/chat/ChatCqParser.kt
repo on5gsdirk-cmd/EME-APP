@@ -100,14 +100,14 @@ object ChatCqParser {
     }
 
     /**
-     * CQ's van de laatste [minutes] minuten, nieuwste bovenaan.
-     * Dezelfde aanroep die meerdere keren in dezelfde minuut gepost werd, wordt één keer getoond.
+     * CQ's van de laatste [minutes] minuten, nieuwste bovenaan. Elk station één keer: zijn
+     * meest recente CQ (#124); hoofdletters of kleine letters in de callsign maken niet uit.
      */
     fun recent(messages: List<ChatMessage>, nowMillis: Long, minutes: Int = WINDOW_MINUTES): List<ChatCq> =
         messages.mapNotNull { parse(it, nowMillis) }
             .filter { nowMillis - it.utcMillis in -120_000L..minutes * 60_000L }
-            .distinctBy { Triple(it.callsign, it.time, it.freq) }
             .sortedWith(compareByDescending<ChatCq> { it.utcMillis }.thenByDescending { it.messageId })
+            .distinctBy { it.callsign.uppercase() }
 
     /** Tekst opschonen: lookalikes vervangen, sterretjes en >> << weg, spaties normaliseren. */
     internal fun clean(text: String): String =

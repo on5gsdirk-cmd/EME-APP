@@ -100,6 +100,11 @@
     <string name="n0uk_cq_empty">直近 60 分、N0UK チャットに CQ 呼び出しはありません。</string>
     <string name="n0uk_error">N0UK チャットに接続できません：%1$s</string>
     <string name="release_notes">リリースノート</string>
+    <string name="update_available">バージョン %1$s が公開されています</string>
+    <string name="update_download">ダウンロード</string>
+    <string name="update_dismiss">閉じる</string>
+    <string name="update_check">新しいバージョンを確認</string>
+    <string name="update_check_hint">1日1回 GitHub に問い合わせます。その際、GitHub にはスマートフォンの IP アドレスが見えます。</string>
     <string name="horizon_title">自分の障害物</string>
     <string name="horizon_info">あなたの局で月を遮る木、家、地面。アプリはこれを使って月が本当に見える時間を表示します。</string>
     <string name="horizon_summary">最低 %1$s° · 障害物: %2$d</string>
@@ -140,4 +145,7 @@
     <string name="mutual_max">最大 EL %1$s° · Deg %2$s dB（%3$s MHz）</string>
     <string name="mutual_partial">一部障害物の陰</string>
     <string name="mutual_calculating">計算中…</string>
+    <string name="moon_ahead">先：%1$s</string>
+    <string name="moon_ahead_hint">スライドで最大48時間先まで表示</string>
+    <string name="moon_now">現在</string>
 </resources>

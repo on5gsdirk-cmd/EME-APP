@@ -129,19 +129,20 @@ object N0ukCqParser {
     }
 
     /**
-     * CQ's van de laatste [minutes] minuten, nieuwste bovenaan. Een CQ waarna hetzelfde station
-     * "stop cq" schreef, krijgt ended = true. Dezelfde aanroep twee keer in dezelfde minuut telt één keer.
+     * CQ's van de laatste [minutes] minuten, nieuwste bovenaan. Elk station één keer: zijn meest
+     * recente CQ (#124), hoofdletters of kleine letters maken niet uit. Schreef het station daarna
+     * "stop cq", dan krijgt die CQ ended = true.
      */
     fun recent(messages: List<N0ukMessage>, nowMillis: Long, minutes: Int): List<N0ukCq> {
         // Alleen "stop cq" tot nu telt (een stop "uit de toekomst" beëindigt niets)
         val stops = messages.filter { kind(it) == N0ukKind.STOP && it.utcMillis <= nowMillis + 120_000L }
         return messages.mapNotNull { parse(it) }
             .filter { nowMillis - it.utcMillis in -120_000L..minutes * 60_000L }
-            .distinctBy { Triple(it.callsign, it.utcMillis, it.freq) }
+            .sortedByDescending { it.utcMillis }
+            .distinctBy { it.callsign.uppercase() }
             .map { cq ->
                 cq.copy(ended = stops.any { it.callsign.equals(cq.callsign, true) && it.utcMillis >= cq.utcMillis })
             }
-            .sortedByDescending { it.utcMillis }
     }
 
     /** Wie recent in de chat schreef (behalve jijzelf), met het tijdstip van het laatste bericht. */

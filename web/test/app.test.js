@@ -140,11 +140,11 @@ describe('settings', () => {
     expect(tabs()[4].textContent).toBe(t('tab_livecq'));
   });
 
-  test('picker starts with the automatic entry (language_system, value "") followed by the 13 languages', () => {
+  test('picker starts with the automatic entry (language_system, value "") followed by the 15 languages', () => {
     mountApp(root);
     openSettings();
     const options = [...root.querySelectorAll('select option')];
-    expect(options).toHaveLength(14);
+    expect(options).toHaveLength(16);
     expect(options[0].value).toBe('');
     expect(options[0].textContent).toBe(t('language_system'));
   });

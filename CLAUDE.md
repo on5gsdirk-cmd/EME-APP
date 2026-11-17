@@ -24,7 +24,7 @@ The rules for every change are in CONTRIBUTING.md. Read and follow them:
 - Run `./gradlew testDebugUnitTest` before every commit. Do not commit when a test fails.
 - A change in logic comes with a unit test. A bug fix comes with a test that fails without
   the fix.
-- A new or changed text goes into all 13 `strings.xml` files.
+- A new or changed text goes into all 15 `strings.xml` files.
 - A change that users see goes into `app/` and `web/` in the same pull request. A change that
   only exists on one platform says so in the pull request.
 - Run `npm test` in `web/` and `go test ./...` in `web/server` before a commit that touches `web/`.

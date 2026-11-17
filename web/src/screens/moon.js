@@ -1,5 +1,6 @@
 // Port of MoonScreen.kt: date/time, world map, band legend, phase, AZ/EL, distance and moonrise/culmination/moonset.
 // Clock every second, events and map every minute; both pause while the page is hidden.
+// Slider under the map (#118): look up to 48 h ahead; the times card stays about now, the CQ spots are hidden.
 
 import { liveCqStore } from '../data.js';
 import { effectiveLanguage, locatorLatLon } from '../settings.js';
@@ -10,6 +11,7 @@ import { BANDS, selectSpots, stationLatLon } from '../lib/livecq.js';
 import { computeEvents } from '../lib/moon-events.js';
 import { position } from '../lib/moon-calculator.js';
 import { phaseAt } from '../lib/moon-phase.js';
+import { MAX_STEPS, lookAheadBase, lookAheadLabel, shownMillis } from '../lib/look-ahead.js';
 import { bandVar, drawWorldMap, parseLand } from '../lib/world-map.js';
 import landText from '../generated/land110m.txt?raw';
 
@@ -102,6 +104,19 @@ export function createMoonScreen() {
       }
 
       const canvas = el('canvas');
+      // Slider: 0 = now (the clock runs); else base + steps of 10 minutes, fixed while sliding
+      let steps = 0;
+      let base = 0;
+      const shownOf = (now) => shownMillis(now, base, steps);
+      const lookAhead = el('div', 'lookahead');
+      const slider = tagged(el('input'), 'look-ahead');
+      Object.assign(slider, { type: 'range', min: '0', max: String(MAX_STEPS), step: '1', value: '0' });
+      const nowButton = tagged(el('button', 'outlined', t('moon_now')), 'look-now');
+      nowButton.type = 'button';
+      const lookLabel = tagged(el('div', 'look-label'), 'look-label');
+      const sliderRow = el('div', 'row');
+      sliderRow.append(slider, nowButton);
+      lookAhead.append(sliderRow, lookLabel);
       const legend = tagged(el('div', 'legend'), 'legend');
       legend.append(el('span', '', t('livecq_spots')));
       if (settings.cqBands.size === 0) legend.append(el('span', '', '—'));
@@ -130,11 +145,12 @@ export function createMoonScreen() {
         const panel = createMutualPanel({ settings, t, now: ctx.now, lang }, () => panel.remove());
         root.append(panel);
       });
-      root.append(canvas, legend, phase, where, bigValues, distance, ...(withHorizon ? [horizonNow] : []), events, mutualOpen);
+      root.append(canvas, lookAhead, legend, phase, where, bigValues, distance, ...(withHorizon ? [horizonNow] : []), events, mutualOpen);
 
       let eventData = null;
       let windowData = null;
       let lastMinute = null;
+      let lastMapKey = null;
 
       const phaseName = (i) => t(`phase_${i}`);
       const line = (label, event, now, extra) => {
@@ -178,19 +194,32 @@ export function createMoonScreen() {
         return row;
       };
 
-      const redrawMap = (now) => {
-        // One dot per station and band, same selection as the Live CQ tab
-        const stations = selectSpots(liveCq.getState().spots, settings.cqBands, now, CQ_MAX_AGE_MINUTES).flatMap((s) => {
+      const redrawMap = (shown) => {
+        // One dot per station and band, same selection as the Live CQ tab; only on now (they are CQs of now)
+        const spots = steps === 0 ? selectSpots(liveCq.getState().spots, settings.cqBands, shown, CQ_MAX_AGE_MINUTES) : [];
+        const stations = spots.flatMap((s) => {
           const p = s.band ? stationLatLon(s.grid) : null;
           return p ? [{ callsign: s.callsign, latDeg: p.latDeg, lonDeg: p.lonDeg, band: s.band }] : [];
         });
-        drawWorldMap(canvas, { nowMs: now, home: { latDeg: pos.latDeg, lonDeg: pos.lonDeg, callsign }, spots: stations, land: land() });
+        drawWorldMap(canvas, { nowMs: shown, home: { latDeg: pos.latDeg, lonDeg: pos.lonDeg, callsign }, spots: stations, land: land() });
+      };
+
+      const renderLookAhead = () => {
+        const live = steps === 0;
+        const text = live ? t('moon_ahead_hint') : t('moon_ahead', lookAheadLabel(steps));
+        lookLabel.textContent = text;
+        lookLabel.classList.toggle('ahead', !live);
+        slider.setAttribute('aria-label', text);
+        nowButton.disabled = live;
+        legend.hidden = !live;
+        timeLines.classList.toggle('ahead', !live);
       };
 
       const tick = () => {
         const now = ctx.now();
-        tickClock(now);
-        const moon = position(pos.latDeg, pos.lonDeg, now);
+        const shown = shownOf(now);
+        tickClock(shown);
+        const moon = position(pos.latDeg, pos.lonDeg, shown);
         az.textContent = `${moon.azimuthDeg.toFixed(1)}°`;
         elev.textContent = `${moon.elevationDeg.toFixed(1)}°`;
         distance.textContent = t('distance', moon.distanceKm.toLocaleString(lang, { maximumFractionDigits: 0 }));
@@ -199,14 +228,20 @@ export function createMoonScreen() {
           horizonNow.className = `horizon-now ${VIS_CLASS[v]}`;
           horizonNow.textContent = t(VIS_TEXT[v]);
         }
+        // The times card stays about now: recalculated every minute
         const minute = Math.floor(now / MINUTE_MS);
         if (minute !== lastMinute) {
           lastMinute = minute;
           eventData = computeEvents(pos.latDeg, pos.lonDeg, now);
           if (withHorizon) windowData = currentOrNextWindow(horizon, pos.latDeg, pos.lonDeg, now, margin);
-          const p = phaseAt(now);
+        }
+        // Map and phase follow the slider: every minute on now, at once for a new slider time
+        const mapKey = steps === 0 ? `now ${minute}` : `at ${shown}`;
+        if (mapKey !== lastMapKey) {
+          lastMapKey = mapKey;
+          const p = phaseAt(shown);
           phase.textContent = t('moon_phase', phaseName(p.nameIndex), Math.round(p.illuminated * 100));
-          redrawMap(now);
+          redrawMap(shown);
         }
         renderEvents(now);
       };
@@ -219,7 +254,7 @@ export function createMoonScreen() {
           frame = null;
           if (canvas.clientWidth === drawnWidth) return;
           drawnWidth = canvas.clientWidth;
-          redrawMap(ctx.now());
+          redrawMap(shownOf(ctx.now()));
         });
       };
       window.addEventListener('resize', onResize);
@@ -228,13 +263,23 @@ export function createMoonScreen() {
       const unsubscribe = liveCq.subscribe((state) => {
         if (state.spots === drawnSpots) return;
         drawnSpots = state.spots;
-        redrawMap(ctx.now());
+        redrawMap(shownOf(ctx.now()));
       });
       cleanup = () => {
         unsubscribe();
         window.removeEventListener('resize', onResize);
         if (frame !== null) cancelAnimationFrame(frame);
       };
+      const setSteps = (value) => {
+        if (steps === 0 && value > 0) base = lookAheadBase(ctx.now());
+        steps = value;
+        slider.value = String(value);
+        renderLookAhead();
+        tick();
+      };
+      slider.addEventListener('input', () => setSteps(Math.min(Math.max(Math.round(Number(slider.value)), 0), MAX_STEPS)));
+      nowButton.addEventListener('click', () => setSteps(0));
+      renderLookAhead();
       tick();
       drawnWidth = canvas.clientWidth;
       start(tick);

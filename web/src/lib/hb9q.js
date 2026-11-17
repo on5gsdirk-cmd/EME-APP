@@ -214,18 +214,18 @@ export function parseCq(msg, nowMs) {
   };
 }
 
-/** CQs of the last [minutes] minutes, newest first; the same call posted twice in one minute shows once. */
+/** CQs of the last [minutes] minutes, newest first; each station once: its most recent CQ (#124), case does not matter. */
 export function recentCqs(messages, nowMs, minutes = CHAT_CQ_WINDOW_MINUTES) {
   const seen = new Set();
   return messages
     .map((m) => parseCq(m, nowMs))
     .filter((c) => c !== null)
     .filter((c) => nowMs - c.utcMillis >= -120_000 && nowMs - c.utcMillis <= minutes * 60_000)
+    .sort((a, b) => b.utcMillis - a.utcMillis || b.messageId - a.messageId)
     .filter((c) => {
-      const key = JSON.stringify([c.callsign, c.time, c.freq]);
+      const key = c.callsign.toUpperCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    })
-    .sort((a, b) => b.utcMillis - a.utcMillis || b.messageId - a.messageId);
+    });
 }

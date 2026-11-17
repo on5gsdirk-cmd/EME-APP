@@ -36,6 +36,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.ui.semantics.contentDescription
+import kotlin.math.roundToInt
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -127,16 +133,28 @@ fun MoonScreen(settings: SettingsRepository, callsign: String, locator: String) 
     val cq by LiveCqStore.state.collectAsState()
     val bands = remember { settings.cqBands }
 
+    // Schuifbalk (#118): 0 = nu; anders [lookBase] + stappen van 10 minuten, de klok loopt dan niet mee
+    var lookSteps by rememberSaveable { mutableIntStateOf(0) }
+    var lookBase by rememberSaveable { mutableLongStateOf(0L) }
+    val live = lookSteps == 0
+    val shown = LookAhead.shownMillis(now, lookBase, lookSteps)
+    val setSteps = { steps: Int ->
+        if (lookSteps == 0 && steps > 0) lookBase = LookAhead.base(AppClock.now())
+        lookSteps = steps
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Datum en tijd: lokaal en UTC
-        val instant = Instant.ofEpochMilli(now)
+        // Datum en tijd van de schuifbalk; oranje als het niet "nu" is
+        val instant = Instant.ofEpochMilli(shown)
         val zoneName = zone.getDisplayName(DateTextStyle.SHORT, locale)
         TimeLines(
             stringResource(R.string.time_local) to (dateTime.format(instant.atZone(zone)) to zoneName),
             "UTC" to (dateTime.format(instant.atZone(ZoneOffset.UTC)) to ""),
+            color = if (live) Color.Unspecified else PARTIAL_ORANGE,
         )
         Spacer(Modifier.height(8.dp))
 
@@ -145,17 +163,19 @@ fun MoonScreen(settings: SettingsRepository, callsign: String, locator: String) 
             return@Column
         }
 
-        val sub = MoonCalculator.subLunarPoint(now)
-        // Eén stip per station en band (zelfde selectie als het tabblad Live CQ)
-        val stations = LiveCqParser.select(cq.spots, bands, now, CQ_MAX_AGE_MINUTES)
+        val sub = MoonCalculator.subLunarPoint(shown)
+        // Eén stip per station en band (zelfde selectie als het tabblad Live CQ); alleen "nu", want
+        // de spots zijn CQ's van nu en horen niet op de kaart van later
+        val stations = if (!live) emptyList() else LiveCqParser.select(cq.spots, bands, now, CQ_MAX_AGE_MINUTES)
             .mapNotNull { spot ->
                 val band = spot.band ?: return@mapNotNull null
                 stationLatLon(spot.grid)?.let { MapStation(spot.callsign, it.latDeg, it.lonDeg, band.color) }
             }
         // Kaartlabels altijd even klein, ook bij een grote systeem-lettergrootte
-        val phase = remember(now / 600_000) { MoonPhase.at(now) }   // elke 10 minuten herberekenen
+        val phase = remember(shown / 600_000) { MoonPhase.at(shown) }   // elke 10 minuten herberekenen
         FixedFontScale { WorldMap(sub, pos.latDeg to pos.lonDeg, callsign, stations, phase) }
-        BandLegend(bands)
+        LookAheadBar(lookSteps, setSteps)
+        if (live) BandLegend(bands)
         Text(
             stringResource(R.string.moon_phase, phaseName(phase.nameIndex), Math.round(phase.illuminated * 100).toInt()),
             style = MaterialTheme.typography.bodySmall,
@@ -164,7 +184,7 @@ fun MoonScreen(settings: SettingsRepository, callsign: String, locator: String) 
         Spacer(Modifier.height(12.dp))
 
         Text("$callsign  ·  $locator", style = MaterialTheme.typography.titleMedium)
-        val moon = MoonCalculator.position(pos.latDeg, pos.lonDeg, now)
+        val moon = MoonCalculator.position(pos.latDeg, pos.lonDeg, shown)
         Row(Modifier.fillMaxWidth()) {
             BigValue("AZ", moon.azimuthDeg, Modifier.weight(1f))
             BigValue("EL", moon.elevationDeg, Modifier.weight(1f))
@@ -173,7 +193,7 @@ fun MoonScreen(settings: SettingsRepository, callsign: String, locator: String) 
             stringResource(R.string.distance, String.format(locale, "%,.0f", moon.distanceKm)),
             style = MaterialTheme.typography.bodyMedium,
         )
-        // Alleen met een eigen horizon: staat de maan nu vrij, gedeeltelijk of achter je horizon?
+        // Alleen met een eigen horizon: staat de maan (op de gekozen tijd) vrij, gedeeltelijk of achter je horizon?
         if (!horizon.isDefault) {
             val v = horizon.visibility(moon.azimuthDeg, moon.elevationDeg, margin)
             Text(
@@ -191,6 +211,7 @@ fun MoonScreen(settings: SettingsRepository, callsign: String, locator: String) 
         }
         Spacer(Modifier.height(12.dp))
 
+        // De kaart met de tijden blijft over nu gaan: een vast referentiepunt tijdens het schuiven
         events?.let { ev -> EventsCard(ev, now, zone, locale, if (horizon.isDefault) null else window) }
 
         // Gezamenlijk maanvenster met een ander station (#119)
@@ -233,9 +254,39 @@ private fun BandLegend(bands: Set<Band>) {
     }
 }
 
+/**
+ * Schuifbalk van nu tot 48 uur vooruit (#118), met "Nu" om terug te gaan. Daaronder hoeveel
+ * vooruit ("Vooruit: +5:30"), of een korte uitleg op "nu".
+ */
+@Composable
+private fun LookAheadBar(steps: Int, onSteps: (Int) -> Unit) {
+    val text = if (steps == 0) stringResource(R.string.moon_ahead_hint) else stringResource(R.string.moon_ahead, LookAhead.label(steps))
+    Column(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Slider(
+                value = steps.toFloat(),
+                onValueChange = { onSteps(it.roundToInt().coerceIn(0, LookAhead.MAX_STEPS)) },
+                valueRange = 0f..LookAhead.MAX_STEPS.toFloat(),
+                modifier = Modifier.weight(1f).testTag("look-ahead").semantics { contentDescription = text },
+            )
+            Spacer(Modifier.width(8.dp))
+            OutlinedButton(onClick = { onSteps(0) }, enabled = steps != 0, modifier = Modifier.testTag("look-now")) {
+                Text(stringResource(R.string.moon_now), maxLines = 1)
+            }
+        }
+        Text(
+            text,
+            style = MaterialTheme.typography.bodySmall,
+            color = if (steps == 0) MaterialTheme.colorScheme.secondary else PARTIAL_ORANGE,
+            fontWeight = if (steps == 0) null else FontWeight.Bold,
+            modifier = Modifier.testTag("look-label"),
+        )
+    }
+}
+
 /** Datum/tijd-regels in twee kolommen; de labelkolom past zich aan de langste vertaling aan. */
 @Composable
-private fun TimeLines(vararg lines: Pair<String, Pair<String, String>>) = FixedFontScale {
+private fun TimeLines(vararg lines: Pair<String, Pair<String, String>>, color: Color = Color.Unspecified) = FixedFontScale {
     val measurer = rememberTextMeasurer()
     val label = TextStyle(fontSize = 17.sp)
     val value = TextStyle(fontSize = 17.sp, fontFamily = FontFamily.Monospace)
@@ -245,9 +296,11 @@ private fun TimeLines(vararg lines: Pair<String, Pair<String, String>>) = FixedF
         val gap = with(LocalDensity.current) { 10.dp.roundToPx() }
         fun width(text: String, style: TextStyle) =
             measurer.measure(text, style, maxLines = 1, softWrap = false).size.width
-        val needed = lines.maxOf { width(it.first, label) } + gap +
-            lines.maxOf { (_, v) -> width(v.first, value) + if (v.second.isEmpty()) 0 else width("  ${v.second}", zone) }
-        val scale = fitScale(needed, constraints.maxWidth)
+        fun needed(scale: Float) = lines.maxOf { width(it.first, label.scaled(scale)) } + (gap * scale).toInt() +
+            lines.maxOf { (_, v) -> width(v.first, value.scaled(scale)) + if (v.second.isEmpty()) 0 else width("  ${v.second}", zone.scaled(scale)) }
+        // Kleinere letters worden niet precies evenredig smaller (afronding per letter): opnieuw meten
+        var scale = fitScale(needed(1f), constraints.maxWidth)
+        repeat(3) { if (scale < 1f) scale *= fitScale(needed(scale), constraints.maxWidth) }
         Row(verticalAlignment = Alignment.Bottom) {
             Column(horizontalAlignment = Alignment.End) {
                 lines.forEach { (text, _) ->
@@ -258,7 +311,7 @@ private fun TimeLines(vararg lines: Pair<String, Pair<String, String>>) = FixedF
             Column {
                 lines.forEach { (_, v) ->
                     Row(verticalAlignment = Alignment.Bottom) {
-                        Text(v.first, style = value.scaled(scale), maxLines = 1, softWrap = false)
+                        Text(v.first, style = value.scaled(scale), color = color, maxLines = 1, softWrap = false)
                         if (v.second.isNotEmpty()) Text("  ${v.second}", style = zone.scaled(scale), maxLines = 1, softWrap = false)
                     }
                 }
@@ -277,7 +330,7 @@ private fun BigValue(label: String, value: Double, modifier: Modifier = Modifier
         val scale = fitScale(measurer.measure(text, style, maxLines = 1, softWrap = false).size.width, constraints.maxWidth)
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(label, fontSize = 20.sp, color = MaterialTheme.colorScheme.secondary)
-            Text(text, style = style.scaled(scale), maxLines = 1, softWrap = false)
+            Text(text, style = style.scaled(scale), maxLines = 1, softWrap = false, modifier = Modifier.testTag("value-$label"))
         }
     }
 }

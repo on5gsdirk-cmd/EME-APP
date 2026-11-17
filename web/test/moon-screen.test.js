@@ -4,6 +4,21 @@ import { createMoonScreen } from '../src/screens/moon.js';
 import { setLanguage, t } from '../src/i18n.js';
 import { decode } from '../src/lib/horizon.js';
 import { withTimeZone } from './tz.js';
+import { position } from '../src/lib/moon-calculator.js';
+import { toLatLon } from '../src/lib/maidenhead.js';
+
+// Wraps drawWorldMap to see what the map gets (time and spots); it still draws as before
+const mapCalls = vi.hoisted(() => []);
+vi.mock('../src/lib/world-map.js', async (importOriginal) => {
+  const real = await importOriginal();
+  return {
+    ...real,
+    drawWorldMap: (canvas, opts) => {
+      mapCalls.push(opts);
+      return real.drawWorldMap(canvas, opts);
+    },
+  };
+});
 
 const NOW = Date.parse('2026-11-07T10:00:00Z');
 let host;
@@ -186,5 +201,68 @@ describe('own horizon in the moon tab (same as HorizonUseTest.kt)', () => {
     screen.mount(host, ctxOf(settings()));
     expect(q('horizon-now')).toBeNull();
     expect(q('horizon-window')).toBeNull();
+  });
+});
+
+describe('slider to look ahead (#118, same as LookAheadScreenTest.kt)', () => {
+  const HOUR = 3_600_000;
+  const slide = (steps) => {
+    const slider = q('look-ahead');
+    slider.value = String(steps);
+    slider.dispatchEvent(new Event('input'));
+  };
+  const deg = (v) => `${v.toFixed(1)}°`;
+
+  test('6 hours ahead moves the moon, clock, phase and map, but not the times card; Now goes back', () => {
+    const restore = withTimeZone('Europe/Brussels');
+    try {
+      const now = Date.parse('2026-11-20T12:00:00Z');
+      vi.setSystemTime(now);
+      const horizon = decode('1;5;B 60 110 25;P 180 200 20');
+      screen.mount(host, ctxOf(settings({ horizon })));
+      expect(q('look-label').textContent).toBe('Slide to look up to 48 h ahead');
+      expect(q('look-now').disabled).toBe(true);
+      expect(q('horizon-now').textContent).toBe('Moon behind your obstacles');
+      const windowNow = q('horizon-window').textContent;
+
+      slide(36);
+      const { latDeg, lonDeg } = toLatLon('JO21SC');
+      const later = position(latDeg, lonDeg, now + 6 * HOUR);
+      expect(q('look-label').textContent).toBe('Ahead: +6:00');
+      expect(q('look-now').disabled).toBe(false);
+      expect(q('az').textContent).toBe(deg(later.azimuthDeg));
+      expect(q('el').textContent).toBe(deg(later.elevationDeg));
+      expect(q('utc').textContent).toContain('18:00:00');
+      expect(q('horizon-now').textContent).not.toBe('Moon behind your obstacles');
+      expect(mapCalls.at(-1).nowMs).toBe(now + 6 * HOUR);
+      expect(q('horizon-window').textContent).toBe(windowNow);
+
+      // The chosen time does not run on with the clock
+      vi.advanceTimersByTime(5_000);
+      expect(q('utc').textContent).toContain('18:00:00');
+
+      q('look-now').click();
+      const atNow = position(latDeg, lonDeg, Date.now());
+      expect(q('az').textContent).toBe(deg(atNow.azimuthDeg));
+      expect(q('look-label').textContent).toBe('Slide to look up to 48 h ahead');
+      expect(q('horizon-now').textContent).toBe('Moon behind your obstacles');
+    } finally {
+      restore();
+    }
+  });
+
+  test('the Live CQ spots and their legend are hidden when not on now', () => {
+    liveCq.state = { spots: [{ callsign: 'PA0XYZ', band: 'B23CM', utcMillis: NOW - 5 * 60_000, spotter: 'W3SZ', grid: 'JO22', sources: new Set(['W3SZ']) }] };
+    screen.mount(host, ctxOf(settings()));
+    expect(mapCalls.at(-1).spots.map((s) => s.callsign)).toEqual(['PA0XYZ']);
+    expect(q('legend').hidden).toBe(false);
+    slide(1);
+    expect(mapCalls.at(-1).spots).toEqual([]);
+    expect(q('legend').hidden).toBe(true);
+    liveCq.emit(liveCq.state.spots);
+    expect(mapCalls.at(-1).spots).toEqual([]);
+    q('look-now').click();
+    expect(mapCalls.at(-1).spots.map((s) => s.callsign)).toEqual(['PA0XYZ']);
+    expect(q('legend').hidden).toBe(false);
   });
 });

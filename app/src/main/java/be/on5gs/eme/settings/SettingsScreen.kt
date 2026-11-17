@@ -26,7 +26,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -131,10 +135,27 @@ fun SettingsScreen(
         Hb9qLoginSection(credentialStore)
 
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
+        UpdateCheckSwitch(settings)
         val uriHandler = LocalUriHandler.current
         TextButton(onClick = { uriHandler.openUri(RELEASE_NOTES_URL) }) {
             Text("${stringResource(R.string.release_notes)}  v${BuildConfig.VERSION_NAME}")
         }
+    }
+}
+
+/** Aan of uit: één keer per dag aan GitHub vragen of er een nieuwe versie is (#126). */
+@Composable
+private fun UpdateCheckSwitch(settings: SettingsRepository) {
+    var on by remember { mutableStateOf(settings.updateCheck) }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().toggleable(value = on, role = Role.Switch) { on = it; settings.updateCheck = it },
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.update_check))
+            Text(stringResource(R.string.update_check_hint), style = MaterialTheme.typography.bodySmall)
+        }
+        Switch(checked = on, onCheckedChange = null)
     }
 }
 

@@ -61,8 +61,32 @@ class SettingsRepository(context: Context) {
         get() = (prefs.getString(KEY_MUTUAL, null) ?: "").split(",").filter { Maidenhead.isValid(it) && it.isNotEmpty() }.take(5)
         set(value) = prefs.edit().putString(KEY_MUTUAL, value.take(5).joinToString(",")).apply()
 
+    /** Eén keer per dag aan GitHub vragen of er een nieuwe versie is (#126). Standaard aan. */
+    var updateCheck: Boolean
+        get() = prefs.getBoolean(KEY_UPDATE_CHECK, true)
+        set(value) = prefs.edit().putBoolean(KEY_UPDATE_CHECK, value).apply()
+
+    /** Tijdstip van de laatste vraag aan GitHub, ook een mislukte. */
+    var lastUpdateCheck: Long
+        get() = prefs.getLong(KEY_LAST_UPDATE_CHECK, 0L)
+        set(value) = prefs.edit().putLong(KEY_LAST_UPDATE_CHECK, value).apply()
+
+    /** Laatste versie op GitHub bij die vraag ("1.4.0"), leeg als nog onbekend. */
+    var latestVersion: String
+        get() = prefs.getString(KEY_LATEST_VERSION, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_LATEST_VERSION, value).apply()
+
+    /** Versie waarvan de gebruiker de melding sloot; die komt niet terug, een nieuwere wel. */
+    var dismissedVersion: String
+        get() = prefs.getString(KEY_DISMISSED_VERSION, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_DISMISSED_VERSION, value).apply()
+
     companion object {
         private const val KEY_MUTUAL = "mutual_locators"
+        private const val KEY_UPDATE_CHECK = "update_check"
+        private const val KEY_LAST_UPDATE_CHECK = "last_update_check"
+        private const val KEY_LATEST_VERSION = "latest_version"
+        private const val KEY_DISMISSED_VERSION = "dismissed_version"
         private const val KEY_DISH_BAND = "dish_band"
         private const val KEY_DISH = "dish_diameter_m"
         private const val KEY_HORIZON = "horizon"

@@ -22,7 +22,9 @@ object AppLanguage {
         "sv" to "Svenska",
         "da" to "Dansk",
         "fi" to "Suomi",
+        "cs" to "Čeština",
         "ru" to "Русский",
+        "uk" to "Українська",
         "zh" to "中文",
         "ja" to "日本語",
     )

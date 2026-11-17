@@ -100,6 +100,11 @@
     <string name="n0uk_cq_empty">Sem chamadas CQ no chat N0UK nos últimos 60 minutos.</string>
     <string name="n0uk_error">Chat N0UK inacessível: %1$s</string>
     <string name="release_notes">Notas da versão</string>
+    <string name="update_available">A versão %1$s está disponível</string>
+    <string name="update_download">Transferir</string>
+    <string name="update_dismiss">Fechar</string>
+    <string name="update_check">Procurar novas versões</string>
+    <string name="update_check_hint">Consulta o GitHub uma vez por dia. O GitHub vê então o endereço IP do seu telefone.</string>
     <string name="horizon_title">Os meus obstáculos</string>
     <string name="horizon_info">Árvores, casas e o terreno que tapam a lua na sua estação. A app usa-os para mostrar quando a lua está mesmo livre.</string>
     <string name="horizon_summary">Mínimo %1$s° · obstáculos: %2$d</string>
@@ -140,4 +145,7 @@
     <string name="mutual_max">EL máx. %1$s° · Deg %2$s dB (%3$s MHz)</string>
     <string name="mutual_partial">em parte atrás dos seus obstáculos</string>
     <string name="mutual_calculating">A calcular…</string>
+    <string name="moon_ahead">Adiante: %1$s</string>
+    <string name="moon_ahead_hint">Deslize para ver até 48 h à frente</string>
+    <string name="moon_now">Agora</string>
 </resources>

@@ -1,7 +1,7 @@
 import strings from './generated/strings.json';
 
 /** Port of AppLanguage.options (order of the language picker). */
-export const LANGUAGES = ['nl', 'fr', 'en', 'de', 'es', 'it', 'pt', 'sv', 'da', 'fi', 'ru', 'zh', 'ja'];
+export const LANGUAGES = ['nl', 'fr', 'en', 'de', 'es', 'it', 'pt', 'sv', 'da', 'fi', 'cs', 'ru', 'uk', 'zh', 'ja'];
 
 let current = 'en';
 

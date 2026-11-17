@@ -78,9 +78,13 @@ describe('loadSettings', () => {
 });
 
 describe('effectiveLanguage', () => {
-  test('automatic follows the browser language when it is one of the 13, else en', () => {
+  test('automatic follows the browser language when it is one of the 15, else en', () => {
     setNavigatorLanguage('nl-BE');
     expect(effectiveLanguage({ language: '' })).toBe('nl');
+    setNavigatorLanguage('cs-CZ');
+    expect(effectiveLanguage({ language: '' })).toBe('cs');
+    setNavigatorLanguage('uk-UA');
+    expect(effectiveLanguage({ language: '' })).toBe('uk');
     setNavigatorLanguage('tr-TR');
     expect(effectiveLanguage({ language: '' })).toBe('en');
   });

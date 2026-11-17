@@ -77,10 +77,10 @@ describe('N0ukParser', () => {
     // On 10 November at 16:20 UTC: window of 60 minutes
     const t = millis('2026-11-10T16:20:00Z');
     const cqs = recentCqs(parseN0uk(page, t), t, 60);
-    expect(cqs.map((c) => c.time)).toEqual(['16:11', '15:30']);
+    // F4HBY called at 15:30 (stopped at 15:57) and at 16:11: only the most recent (#124)
+    expect(cqs.map((c) => c.time)).toEqual(['16:11']);
     expect(cqs.every((c) => c.callsign === 'F4HBY' && c.freq === '144.131' && c.mode === 'JT65B' && c.period === '1st')).toBe(true);
     expect(cqs[0].ended).toBe(false); // 16:11 is still running
-    expect(cqs[1].ended).toBe(true); // 15:30 was stopped at 15:57
     expect(cqs[0].locator).toBe('IN97at');
   });
 

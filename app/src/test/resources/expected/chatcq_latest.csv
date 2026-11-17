@@ -1,0 +1,26 @@
+# Chat CQ (#124): each station once, its most recent CQ. ChatCqParser.recent / N0ukCqParser.recent in the app,
+# recentCqs in web/src/lib/hb9q.js and web/src/lib/n0uk.js. Each case is computed on its own.
+# hb9q: now 2026-11-08 09:10 UTC, text "***** CQ <freq> 1st Q65-60C CFOM 1500 *****".
+# n0uk: now 2026-11-10 16:20 UTC, kind cq = "CQ <freq> 1st JT65B", kind stop = "stop cq".
+# expect: shown, ended (shown and marked ended), or empty (not shown). Window 60 minutes.
+chat,case,kind,callsign,time_utc,freq,expect
+hb9q,three-calls,cq,PA0ABC,08:20,1296.050,
+hb9q,three-calls,cq,PA0ABC,08:40,1296.060,
+hb9q,three-calls,cq,PA0ABC,09:00,1296.070,shown
+hb9q,two-stations,cq,F5AOL,08:50,1296.088,shown
+hb9q,two-stations,cq,OE3GWC,08:45,1296.065,shown
+hb9q,case,cq,pa0abc,08:30,1296.050,
+hb9q,case,cq,PA0ABC,08:55,1296.060,shown
+hb9q,same-minute-twice,cq,OE3GWC,08:50,1296.065,shown
+hb9q,same-minute-twice,cq,OE3GWC,08:50,1296.065,
+n0uk,three-calls,cq,F4HBY,15:30,144.131,
+n0uk,three-calls,cq,F4HBY,15:50,144.131,
+n0uk,three-calls,cq,F4HBY,16:10,144.129,shown
+n0uk,stop-after-newest,cq,DL1ABC,15:40,144.120,
+n0uk,stop-after-newest,cq,DL1ABC,16:00,144.125,ended
+n0uk,stop-after-newest,stop,DL1ABC,16:05,,
+n0uk,stop-before-newest,cq,OK1XYZ,15:30,144.110,
+n0uk,stop-before-newest,stop,OK1XYZ,15:35,,
+n0uk,stop-before-newest,cq,OK1XYZ,16:15,144.115,shown
+n0uk,case,cq,f4hby,15:40,144.131,
+n0uk,case,cq,F4HBY,16:00,144.131,shown

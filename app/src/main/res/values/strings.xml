@@ -106,6 +106,11 @@
     <string name="n0uk_cq_empty">No CQ calls in the N0UK chat in the last 60 minutes.</string>
     <string name="n0uk_error">N0UK chat not reachable: %1$s</string>
     <string name="release_notes">Release notes</string>
+    <string name="update_available">Version %1$s is available</string>
+    <string name="update_download">Download</string>
+    <string name="update_dismiss">Close</string>
+    <string name="update_check">Check for new versions</string>
+    <string name="update_check_hint">Asks GitHub once a day. GitHub then sees the IP address of your phone.</string>
     <string name="horizon_title">My obstacles</string>
     <string name="horizon_info">Trees, houses and the ground that block the moon at your station. The app uses them to show when the moon is really clear.</string>
     <string name="horizon_summary">Minimum %1$s° · obstacles: %2$d</string>
@@ -146,4 +151,7 @@
     <string name="mutual_max">Max. EL %1$s° · Deg %2$s dB (%3$s MHz)</string>
     <string name="mutual_partial">partly behind your obstacles</string>
     <string name="mutual_calculating">Calculating…</string>
+    <string name="moon_ahead">Ahead: %1$s</string>
+    <string name="moon_ahead_hint">Slide to look up to 48 h ahead</string>
+    <string name="moon_now">Now</string>
 </resources>

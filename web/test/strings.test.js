@@ -13,10 +13,10 @@ const untranslatable = parseStrings(readFileSync(join(RES, 'values/strings.xml')
 const translatable = (lang) => Object.keys(strings[lang]).filter((k) => !untranslatable.includes(k));
 
 describe('strings.json', () => {
-  test('has 13 languages, one per values folder', () => {
+  test('has 15 languages, one per values folder', () => {
     const folders = readdirSync(RES).filter((d) => d.startsWith('values')).length;
-    expect(LANGUAGES).toHaveLength(13);
-    expect(folders).toBe(13);
+    expect(LANGUAGES).toHaveLength(15);
+    expect(folders).toBe(15);
     expect(Object.keys(strings).sort()).toEqual([...LANGUAGES].sort());
   });
 

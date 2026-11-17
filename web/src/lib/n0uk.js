@@ -135,26 +135,30 @@ export function parseCq(msg) {
 }
 
 /**
- * CQs of the last `minutes` minutes, newest first. A CQ followed by a "stop cq" of the same station gets
- * ended = true. The same call twice in the same minute counts once.
+ * CQs of the last `minutes` minutes, newest first. Each station once: its most recent CQ (#124), case does
+ * not matter. When the station wrote "stop cq" after it, that CQ gets ended = true.
  */
 export function recentCqs(messages, nowMs, minutes) {
   // Only "stop cq" up to now counts (a stop "from the future" ends nothing)
   const stops = messages.filter((m) => kindOf(m) === 'STOP' && m.utcMillis <= nowMs + WINDOW_SLACK_MS);
-  const seen = new Set();
   const cqs = [];
   for (const m of messages) {
     const cq = parseCq(m);
     if (!cq) continue;
     const age = nowMs - cq.utcMillis;
     if (age < -WINDOW_SLACK_MS || age > minutes * 60_000) continue;
-    const key = `${cq.callsign}|${cq.utcMillis}|${cq.freq}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    cq.ended = stops.some((s) => s.callsign.toUpperCase() === cq.callsign.toUpperCase() && s.utcMillis >= cq.utcMillis);
     cqs.push(cq);
   }
-  return cqs.sort((a, b) => b.utcMillis - a.utcMillis);
+  // Stable sort: of two CQs in the same minute, the first in the list (as the app's sortedByDescending) wins
+  cqs.sort((a, b) => b.utcMillis - a.utcMillis);
+  const seen = new Set();
+  return cqs.filter((cq) => {
+    const key = cq.callsign.toUpperCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    cq.ended = stops.some((s) => s.callsign.toUpperCase() === key && s.utcMillis >= cq.utcMillis);
+    return true;
+  });
 }
 
 /** Who wrote in the chat recently (except yourself), with the time of their latest message. */
