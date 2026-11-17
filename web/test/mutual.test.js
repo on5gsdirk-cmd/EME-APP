@@ -5,6 +5,9 @@ import { VISIBILITY, decode, usableWindows, visibility } from '../src/lib/horizo
 import { position } from '../src/lib/moon-calculator.js';
 import { toLatLon } from '../src/lib/maidenhead.js';
 
+// 8 rows of 30 days and more, minute by minute: 3-4 s per test alone, over 7 s in a full parallel run.
+const SLOW_MS = 30_000;
+
 describe('mutual moon window (same table as MutualWindowsTest.kt)', () => {
   test('as in the shared table', () => {
     const rows = readExpected('mutual_window');
@@ -24,7 +27,7 @@ describe('mutual moon window (same table as MutualWindowsTest.kt)', () => {
       expect(Math.abs(l.startMillis - Date.parse(r.last_start_utc))).toBeLessThanOrEqual(60_000);
       expect(Math.abs(l.endMillis - Date.parse(r.last_end_utc))).toBeLessThanOrEqual(60_000);
     }
-  });
+  }, SLOW_MS);
 
   // The edges are real (#120): the minute before the first window and the minute the last one ends are not mutual,
   // also for a window longer than a day or one running past the 30 days. Computed without mutual.js.
@@ -42,7 +45,7 @@ describe('mutual moon window (same table as MutualWindowsTest.kt)', () => {
       expect(ok(w[0].startMillis) && !ok(w[0].startMillis - 60_000), `${r.dx} ${r.now_utc} first start`).toBe(true);
       expect(ok(w.at(-1).endMillis - 60_000) && !ok(w.at(-1).endMillis), `${r.dx} ${r.now_utc} last end`).toBe(true);
     }
-  });
+  }, SLOW_MS);
 
   test('with yourself it is your own clear window', () => {
     const p = toLatLon('JO21SC');
